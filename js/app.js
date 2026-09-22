@@ -298,9 +298,9 @@ const presetSection = document.getElementById("presetSection");
 const presetChipsEl = document.getElementById("presetChips");
 let editingSubjectId = null; // null = adding a new subject
 
-// A starter list of common college subjects, shown as tappable chips so
-// students don't have to type everything from scratch. Tapping one just
-// fills the text box below — you can still edit it before saving.
+// A prefilled list of common college subjects, shown as tappable chips so
+// students can just pick the ones they're taking instead of typing each one.
+// Tap as many as apply, then hit the button — all of them get added at once.
 const SUBJECT_PRESETS = [
   "Mathematics", "Physics", "Chemistry", "Biology", "English",
   "Statistics", "Economics", "Environmental Science", "Communication Skills",
@@ -313,6 +313,19 @@ const SUBJECT_PRESETS = [
   "Psychology",
 ];
 
+function selectedPresetNames() {
+  return [...presetChipsEl.querySelectorAll(".preset-chip-selected")].map((c) => c.dataset.name);
+}
+
+function updateSaveButtonLabel() {
+  if (editingSubjectId) {
+    saveSubjectBtn.textContent = "Save";
+    return;
+  }
+  const count = selectedPresetNames().length;
+  saveSubjectBtn.textContent = count > 0 ? `Add ${count} Subject${count === 1 ? "" : "s"}` : "Add Subject";
+}
+
 function renderPresetChips() {
   const takenNames = new Set(state.subjects.map((s) => s.name.toLowerCase()));
   presetChipsEl.innerHTML = "";
@@ -322,16 +335,15 @@ function renderPresetChips() {
     chip.type = "button";
     chip.className = "preset-chip";
     chip.textContent = name;
+    chip.dataset.name = name;
 
     if (takenNames.has(name.toLowerCase())) {
       chip.classList.add("preset-chip-added");
       chip.disabled = true;
     } else {
       chip.addEventListener("click", () => {
-        subjectNameInput.value = name;
-        presetChipsEl.querySelectorAll(".preset-chip").forEach((c) => c.classList.remove("preset-chip-selected"));
-        chip.classList.add("preset-chip-selected");
-        subjectNameInput.focus();
+        chip.classList.toggle("preset-chip-selected");
+        updateSaveButtonLabel();
       });
     }
 
@@ -342,25 +354,42 @@ function renderPresetChips() {
 document.getElementById("addSubjectBtn").addEventListener("click", () => {
   editingSubjectId = null;
   subjectModalTitle.textContent = "Add Subject";
-  subjectNameLabel.textContent = "Or type your own";
+  subjectNameLabel.textContent = "Add a custom subject (optional)";
   subjectNameInput.value = "";
   presetSection.classList.remove("hidden");
   renderPresetChips();
+  updateSaveButtonLabel();
   openModal("subjectModal");
-  subjectNameInput.focus();
 });
 
 saveSubjectBtn.addEventListener("click", () => {
-  const name = subjectNameInput.value.trim();
-  if (!name) {
+  if (editingSubjectId) {
+    const name = subjectNameInput.value.trim();
+    if (!name) {
+      subjectNameInput.focus();
+      return;
+    }
+    const subject = state.subjects.find((s) => s.id === editingSubjectId);
+    if (subject) subject.name = name;
+    closeModal("subjectModal");
+    render();
+    return;
+  }
+
+  // Adding: combine every selected preset chip with the optional custom name.
+  const names = selectedPresetNames();
+  const customName = subjectNameInput.value.trim();
+  if (customName) names.push(customName);
+
+  if (names.length === 0) {
     subjectNameInput.focus();
     return;
   }
 
-  if (editingSubjectId) {
-    const subject = state.subjects.find((s) => s.id === editingSubjectId);
-    if (subject) subject.name = name;
-  } else {
+  const existing = new Set(state.subjects.map((s) => s.name.toLowerCase()));
+  let added = 0;
+  for (const name of names) {
+    if (existing.has(name.toLowerCase())) continue; // skip duplicates
     state.subjects.push({
       id: makeId(),
       name,
@@ -368,10 +397,13 @@ saveSubjectBtn.addEventListener("click", () => {
       total: 0,
       lastAction: null,
     });
+    existing.add(name.toLowerCase());
+    added++;
   }
 
   closeModal("subjectModal");
   render();
+  showToast(added === 1 ? "Added 1 subject" : `Added ${added} subjects`);
 });
 
 // ---- Edit counts modal ----
@@ -441,6 +473,7 @@ subjectListEl.addEventListener("click", (e) => {
     subjectNameLabel.textContent = "Subject name";
     subjectNameInput.value = subject.name;
     presetSection.classList.add("hidden");
+    updateSaveButtonLabel();
     openModal("subjectModal");
     subjectNameInput.focus();
   } else if (action === "delete") {
