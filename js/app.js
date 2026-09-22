@@ -123,6 +123,8 @@ const subjectListEl = document.getElementById("subjectList");
 const overallCardEl = document.getElementById("overallCard");
 const overallPctEl = document.getElementById("overallPct");
 const overallSubEl = document.getElementById("overallSub");
+const overallRingEl = document.getElementById("overallRingProgress");
+const RING_CIRCUMFERENCE = 2 * Math.PI * 52; // matches the r=52 circle in index.html
 
 function renderOverall() {
   const totals = state.subjects.reduce(
@@ -136,6 +138,9 @@ function renderOverall() {
 
   const status = getStatus(totals.attended, totals.total, state.target);
   overallPctEl.textContent = status.pctLabel;
+
+  const pct = totals.total > 0 ? totals.attended / totals.total : 0;
+  overallRingEl.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - pct));
 
   if (state.subjects.length === 0) {
     overallSubEl.textContent = "Add a subject to get started";
@@ -175,14 +180,24 @@ function buildSubjectCard(subject) {
     <div class="subject-card-head">
       <div class="subject-name"></div>
       <div class="subject-head-actions">
-        <button class="icon-btn" data-action="edit-counts" title="Edit counts">🖊️</button>
-        <button class="icon-btn" data-action="rename" title="Rename">✏️</button>
-        <button class="icon-btn" data-action="delete" title="Delete">🗑️</button>
+        <button class="icon-btn" data-action="edit-counts" title="Edit counts">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </button>
+        <button class="icon-btn" data-action="rename" title="Rename">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+        <button class="icon-btn" data-action="delete" title="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
       </div>
     </div>
     <div class="subject-stats-row">
       <span class="subject-pct"></span>
       <span class="subject-count"></span>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill"></div>
+      <div class="progress-target-marker"></div>
     </div>
     <div class="status-pill"></div>
     <div class="subject-buttons">
@@ -199,6 +214,12 @@ function buildSubjectCard(subject) {
   const pill = card.querySelector(".status-pill");
   pill.textContent = status.message;
   pill.className = "status-pill status-" + status.color;
+
+  const pct = subject.total > 0 ? subject.attended / subject.total : 0;
+  const fill = card.querySelector(".progress-bar-fill");
+  fill.style.width = Math.min(100, pct * 100) + "%";
+  fill.className = "progress-bar-fill status-" + status.color;
+  card.querySelector(".progress-target-marker").style.left = state.target + "%";
 
   const undoBtn = card.querySelector('[data-action="undo"]');
   undoBtn.disabled = !subject.lastAction;
