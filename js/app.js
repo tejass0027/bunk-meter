@@ -292,13 +292,60 @@ document.querySelectorAll(".modal-overlay").forEach((overlay) => {
 const subjectModal = document.getElementById("subjectModal");
 const subjectModalTitle = document.getElementById("subjectModalTitle");
 const subjectNameInput = document.getElementById("subjectNameInput");
+const subjectNameLabel = document.getElementById("subjectNameLabel");
 const saveSubjectBtn = document.getElementById("saveSubjectBtn");
+const presetSection = document.getElementById("presetSection");
+const presetChipsEl = document.getElementById("presetChips");
 let editingSubjectId = null; // null = adding a new subject
+
+// A starter list of common college subjects, shown as tappable chips so
+// students don't have to type everything from scratch. Tapping one just
+// fills the text box below — you can still edit it before saving.
+const SUBJECT_PRESETS = [
+  "Mathematics", "Physics", "Chemistry", "Biology", "English",
+  "Statistics", "Economics", "Environmental Science", "Communication Skills",
+  "Data Structures", "Algorithms", "Database Management Systems",
+  "Operating Systems", "Computer Networks", "Object Oriented Programming",
+  "Software Engineering", "Web Development", "Machine Learning",
+  "Artificial Intelligence", "Data Science", "Discrete Mathematics",
+  "Digital Electronics", "Microprocessors", "Electrical Circuits",
+  "Mechanics", "Thermodynamics", "Accounting", "Business Management",
+  "Psychology",
+];
+
+function renderPresetChips() {
+  const takenNames = new Set(state.subjects.map((s) => s.name.toLowerCase()));
+  presetChipsEl.innerHTML = "";
+
+  for (const name of SUBJECT_PRESETS) {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "preset-chip";
+    chip.textContent = name;
+
+    if (takenNames.has(name.toLowerCase())) {
+      chip.classList.add("preset-chip-added");
+      chip.disabled = true;
+    } else {
+      chip.addEventListener("click", () => {
+        subjectNameInput.value = name;
+        presetChipsEl.querySelectorAll(".preset-chip").forEach((c) => c.classList.remove("preset-chip-selected"));
+        chip.classList.add("preset-chip-selected");
+        subjectNameInput.focus();
+      });
+    }
+
+    presetChipsEl.appendChild(chip);
+  }
+}
 
 document.getElementById("addSubjectBtn").addEventListener("click", () => {
   editingSubjectId = null;
   subjectModalTitle.textContent = "Add Subject";
+  subjectNameLabel.textContent = "Or type your own";
   subjectNameInput.value = "";
+  presetSection.classList.remove("hidden");
+  renderPresetChips();
   openModal("subjectModal");
   subjectNameInput.focus();
 });
@@ -391,7 +438,9 @@ subjectListEl.addEventListener("click", (e) => {
   } else if (action === "rename") {
     editingSubjectId = id;
     subjectModalTitle.textContent = "Rename Subject";
+    subjectNameLabel.textContent = "Subject name";
     subjectNameInput.value = subject.name;
+    presetSection.classList.add("hidden");
     openModal("subjectModal");
     subjectNameInput.focus();
   } else if (action === "delete") {

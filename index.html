@@ -64,8 +64,14 @@
 <div id="subjectModal" class="modal-overlay hidden">
   <div class="modal">
     <h2 id="subjectModalTitle">Add Subject</h2>
+
+    <div id="presetSection">
+      <span class="field-label">Pick a common subject</span>
+      <div id="presetChips" class="preset-chips"></div>
+    </div>
+
     <label class="field">
-      <span>Subject name</span>
+      <span id="subjectNameLabel">Or type your own</span>
       <input type="text" id="subjectNameInput" placeholder="e.g. Data Structures" maxlength="60" />
     </label>
     <div class="modal-actions">
