@@ -52,46 +52,6 @@ Then open `http://localhost:8000` in Chrome.
 To install it like an app on your Android phone: open the site in Chrome,
 tap the ⋮ menu, choose **"Add to Home screen" / "Install app"**.
 
-## Deploying for free on GitHub Pages
-
-This puts your app on a public URL like
-`https://tejass0027.github.io/bunk-meter/` that you can share with
-classmates. Takes about 5 minutes.
-
-1. **Create a GitHub repository.**
-   - Go to https://github.com/new while signed in as `tejass0027`.
-   - Repository name: `bunk-meter` (or anything you like).
-   - Keep it **Public** (GitHub Pages needs a public repo on the free plan).
-   - Don't add a README/gitignore/license — this project already has files.
-   - Click **Create repository**.
-
-2. **Push this project to it.** In a terminal, inside this project folder:
-   ```bash
-   git remote add origin https://github.com/tejass0027/bunk-meter.git
-   git branch -M main
-   git push -u origin main
-   ```
-   (This part is already done — the app is live at the link above.)
-
-3. **Turn on GitHub Pages.**
-   - On GitHub, open your new repo → **Settings** → **Pages** (left sidebar).
-   - Under "Build and deployment" → **Source**, choose **Deploy from a branch**.
-   - Branch: `main`, folder: `/ (root)`. Click **Save**.
-
-4. **Wait ~1 minute, then visit your link.**
-   - GitHub shows the URL at the top of the Pages settings once it's live:
-     `https://tejass0027.github.io/bunk-meter/`
-   - Share that link with classmates — they can open it in Chrome on
-     Android and tap "Add to Home screen" to install it.
-
-5. **Future updates:** whenever you change a file, run:
-   ```bash
-   git add -A
-   git commit -m "describe what you changed"
-   git push
-   ```
-   GitHub Pages redeploys automatically within a minute or two.
-
 ### Note on updates not showing up
 
 This app works offline, which means phones may keep showing a cached
