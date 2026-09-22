@@ -32,26 +32,6 @@ and share the backup file yourself.
 - **Installable & offline-capable** — add it to your home screen from
   Chrome on Android; it keeps working without signal.
 
-## Running it locally
-
-Because the app registers a service worker, it needs to be served over
-`http://` — opening `index.html` directly with `file://` will mostly work
-(the attendance features are fine), but the offline/install features won't.
-Easiest way to serve it locally:
-
-**Option A — Python (already on most machines):**
-```bash
-cd "path/to/attendence"
-python -m http.server 8000
-```
-Then open `http://localhost:8000` in Chrome.
-
-**Option B — VS Code:** install the "Live Server" extension, right-click
-`index.html`, choose "Open with Live Server".
-
-To install it like an app on your Android phone: open the site in Chrome,
-tap the ⋮ menu, choose **"Add to Home screen" / "Install app"**.
-
 ### Note on updates not showing up
 
 This app works offline, which means phones may keep showing a cached
