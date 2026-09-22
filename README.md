@@ -32,61 +32,6 @@ and share the backup file yourself.
 - **Installable & offline-capable** — add it to your home screen from
   Chrome on Android; it keeps working without signal.
 
-## What each file does
-
-```
-attendence/
-├── index.html          The page itself: header, subject cards, all the
-│                        modals (add subject, edit counts, settings,
-│                        confirm dialog). No logic here — just structure.
-├── css/
-│   └── styles.css      All styling: colors (incl. dark mode), card layout,
-│                        buttons, modals. Colors are CSS variables at the
-│                        top, so it's easy to reskin.
-├── js/
-│   └── app.js           All the app's behavior lives here:
-│                          - loads/saves your data to localStorage
-│                          - the attendance math (%, skip/attend targets)
-│                          - draws the subject cards on screen
-│                          - handles every button tap
-├── manifest.json        Tells the browser this is an installable app
-│                        (name, icons, colors). Required for "Add to
-│                        Home Screen" on Android.
-├── sw.js                 The "service worker" — a background script that
-│                        caches the app's files so it still opens without
-│                        internet. This is what makes it a real PWA.
-├── icons/                App icons in the sizes Android/Chrome expect.
-├── scripts/make_icons.py Script that generated the icons (optional, only
-│                        needed if you want to redesign them).
-└── README.md            This file.
-```
-
-There is no build step. You never need to compile or bundle anything —
-editing any of these files and reloading the page is enough.
-
-## How the attendance math works
-
-For each subject, with `target` as a fraction (75% → 0.75):
-
-- **Attendance %** = attended ÷ total
-- **Color**:
-  - 🟢 green — at least 5 percentage points above target
-  - 🟡 yellow — within 5 percentage points of target (either side)
-  - 🔴 red — more than 5 points below target
-- **If at/above target** — classes you can still skip:
-  `floor((attended − target × total) ÷ target)`
-- **If below target** — classes you must attend in a row to reach target:
-  `ceil((target × total − attended) ÷ (1 − target))`
-
-Verified examples (see "Testing" below):
-- 30 attended / 36 total at 75% target → **"You can skip 4 more classes"**
-- 20 attended / 30 total at 75% target → **"Attend the next 10 classes in a row to reach target"**
-
-Edge cases handled: 0 classes held (shows "No classes recorded yet" instead
-of dividing by zero), target set to 100% (skip/attend math would divide by
-zero, so it's special-cased), and accidental subject deletion (asks for
-confirmation first).
-
 ## Running it locally
 
 Because the app registers a service worker, it needs to be served over
@@ -107,17 +52,6 @@ Then open `http://localhost:8000` in Chrome.
 To install it like an app on your Android phone: open the site in Chrome,
 tap the ⋮ menu, choose **"Add to Home screen" / "Install app"**.
 
-## Testing the math (already verified)
-
-```
-30 / 36 classes @ 75% target → "You can skip 4 more classes"      ✅
-20 / 30 classes @ 75% target → "Attend the next 10 classes ..."   ✅
-```
-I also tested: adding/renaming/deleting subjects, undo, manual count
-editing, the settings target change, export/import, reset-all-data, the
-0-classes and 100%-target edge cases, and confirmed the service worker
-caches all app files for offline use.
-
 ## Deploying for free on GitHub Pages
 
 This puts your app on a public URL like
@@ -137,7 +71,7 @@ classmates. Takes about 5 minutes.
    git branch -M main
    git push -u origin main
    ```
-   (This repo is already initialized and committed for you — see below.)
+   (This part is already done — the app is live at the link above.)
 
 3. **Turn on GitHub Pages.**
    - On GitHub, open your new repo → **Settings** → **Pages** (left sidebar).
@@ -158,10 +92,10 @@ classmates. Takes about 5 minutes.
    ```
    GitHub Pages redeploys automatically within a minute or two.
 
-### Note on the service worker cache
+### Note on updates not showing up
 
-`sw.js` has a `CACHE_NAME` constant (currently `bunkmeter-cache-v1`). If you
-push an update and classmates don't see the change, it's because their
-phone is still serving the old cached files. Bump the version number (e.g.
-`bunkmeter-cache-v2`) whenever you deploy a real update — that forces
-everyone's browser to fetch the new files.
+This app works offline, which means phones may keep showing a cached
+older version for a little while after you push an update. If a classmate
+says they don't see your latest change, have them close the app fully and
+reopen it, or clear the site's data in Chrome — that fetches the fresh
+version.
