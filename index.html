@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Bunk Meter</title>
+<meta name="description" content="Track your class attendance and know exactly how many classes you can skip or must attend." />
+
+<!-- PWA hookup: tells the browser this app can be installed -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#14b882" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Bunk Meter" />
+
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <h1 class="app-title">Bunk Meter</h1>
+  <button id="settingsBtn" class="icon-btn" aria-label="Settings" title="Settings">⚙️</button>
+</header>
+
+<main>
+  <!-- Overall attendance summary across all subjects -->
+  <section id="overallCard" class="overall-card status-neutral">
+    <div class="overall-label">Overall Attendance</div>
+    <div class="overall-pct" id="overallPct">—</div>
+    <div class="overall-sub" id="overallSub">Add a subject to get started</div>
+  </section>
+
+  <!-- Subject cards get inserted here by app.js -->
+  <section id="subjectList" class="subject-list"></section>
+
+  <button id="addSubjectBtn" class="fab" aria-label="Add subject" title="Add subject">＋ Add Subject</button>
+</main>
+
+<!-- ============ Add / Rename Subject modal ============ -->
+<div id="subjectModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 id="subjectModalTitle">Add Subject</h2>
+    <label class="field">
+      <span>Subject name</span>
+      <input type="text" id="subjectNameInput" placeholder="e.g. Data Structures" maxlength="60" />
+    </label>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close-modal="subjectModal">Cancel</button>
+      <button class="btn btn-primary" id="saveSubjectBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Edit counts modal (manual attended/total) ============ -->
+<div id="editCountsModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2>Edit Counts</h2>
+    <p class="modal-hint">Useful if you're joining mid-semester and already have a count.</p>
+    <label class="field">
+      <span>Classes attended</span>
+      <input type="number" id="editAttendedInput" min="0" inputmode="numeric" />
+    </label>
+    <label class="field">
+      <span>Total classes held</span>
+      <input type="number" id="editTotalInput" min="0" inputmode="numeric" />
+    </label>
+    <p class="field-error hidden" id="editCountsError">Attended can't be more than total.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close-modal="editCountsModal">Cancel</button>
+      <button class="btn btn-primary" id="saveCountsBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Settings modal ============ -->
+<div id="settingsModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2>Settings</h2>
+    <label class="field">
+      <span>Target attendance %</span>
+      <input type="number" id="targetInput" min="1" max="100" inputmode="numeric" />
+    </label>
+    <div class="modal-actions modal-actions-stack">
+      <button class="btn btn-primary" id="saveTargetBtn">Save target</button>
+    </div>
+
+    <hr class="divider" />
+
+    <h3>Backup</h3>
+    <div class="modal-actions modal-actions-stack">
+      <button class="btn btn-secondary" id="exportBtn">⬇️ Export data (JSON)</button>
+      <button class="btn btn-secondary" id="importBtn">⬆️ Import data (JSON)</button>
+      <input type="file" id="importFileInput" accept="application/json,.json" class="hidden" />
+    </div>
+
+    <hr class="divider" />
+
+    <h3>Danger zone</h3>
+    <div class="modal-actions modal-actions-stack">
+      <button class="btn btn-danger" id="resetDataBtn">🗑️ Reset all data</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close-modal="settingsModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Generic confirm dialog (delete subject, reset data, import overwrite) ============ -->
+<div id="confirmModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 id="confirmTitle">Are you sure?</h2>
+    <p id="confirmMessage"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="confirmCancelBtn">Cancel</button>
+      <button class="btn btn-danger" id="confirmOkBtn">Yes, do it</button>
+    </div>
+  </div>
+</div>
+
+<!-- Small pop-up feedback after an action, e.g. "Import successful" -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
