@@ -183,7 +183,7 @@ main {
 
 .ring-track {
   fill: none;
-  stroke: var(--surface-2);
+  stroke: rgba(128, 138, 152, 0.25);
   stroke-width: 11;
 }
 
@@ -195,6 +195,28 @@ main {
   stroke-dasharray: 326.7256;
   stroke-dashoffset: 326.7256;
   transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.3s ease;
+}
+
+.overall-card { flex-wrap: wrap; }
+
+.overall-stats {
+  flex-basis: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.stat { text-align: center; }
+.stat-value { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+.stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
 }
 
 .overall-text { min-width: 0; }
@@ -243,7 +265,23 @@ main {
   padding: 18px;
   box-shadow: var(--shadow-sm);
   animation: card-in 0.25s ease both;
+  position: relative;
+  overflow: hidden;
 }
+
+.subject-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--accent, var(--neutral-solid));
+}
+.accent-green { --accent: var(--green-solid); }
+.accent-yellow { --accent: var(--yellow-solid); }
+.accent-red { --accent: var(--red-solid); }
+.accent-neutral { --accent: var(--neutral-solid); }
 
 @keyframes card-in {
   from { opacity: 0; transform: translateY(6px); }
@@ -386,6 +424,7 @@ main {
   transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
 }
 .big-btn:active { transform: scale(0.96); }
+.big-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
 
 .btn-attend {
   background: var(--brand-grad);
@@ -410,8 +449,13 @@ main {
   font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   transition: background 0.15s ease, color 0.15s ease;
 }
+.undo-btn svg { width: 16px; height: 16px; }
 .undo-btn:not(:disabled):hover { color: var(--text); }
 .undo-btn:not(:disabled):active { transform: scale(0.98); }
 .undo-btn:disabled {
@@ -455,11 +499,48 @@ main {
 .empty-state {
   text-align: center;
   color: var(--text-muted);
-  padding: 56px 20px;
+  padding: 44px 24px;
   font-size: 15px;
   border: 1.5px dashed var(--border);
   border-radius: var(--radius);
   background: var(--surface);
+}
+.empty-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand);
+  background: var(--green-bg);
+}
+.empty-icon svg { width: 32px; height: 32px; }
+.empty-title { font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+.empty-text { font-size: 14px; line-height: 1.5; max-width: 260px; margin: 0 auto; }
+
+.target-chips { display: flex; gap: 6px; margin: -4px 0 4px; }
+.target-chips .preset-chip { flex: 1; padding: 9px 0; text-align: center; }
+
+.btn-with-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-with-icon svg { width: 18px; height: 18px; }
+
+@media (max-width: 479px) {
+  .modal::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    margin: -10px auto 14px;
+  }
 }
 
 /* ---------- Modals ---------- */

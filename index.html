@@ -50,6 +50,11 @@
       <div class="overall-pct" id="overallPct">—</div>
       <div class="overall-sub" id="overallSub">Add a subject to get started</div>
     </div>
+    <div class="overall-stats" id="overallStats">
+      <div class="stat"><div class="stat-value" id="statSubjects">0</div><div class="stat-label">Subjects</div></div>
+      <div class="stat"><div class="stat-value" id="statAttended">0</div><div class="stat-label">Attended</div></div>
+      <div class="stat"><div class="stat-value" id="statMissed">0</div><div class="stat-label">Missed</div></div>
+    </div>
   </section>
 
   <!-- Subject cards get inserted here by app.js -->
@@ -110,6 +115,14 @@
       <span>Target attendance %</span>
       <input type="number" id="targetInput" min="1" max="100" inputmode="numeric" />
     </label>
+    <div class="target-chips" id="targetChips">
+      <button type="button" class="preset-chip" data-target="65">65%</button>
+      <button type="button" class="preset-chip" data-target="70">70%</button>
+      <button type="button" class="preset-chip" data-target="75">75%</button>
+      <button type="button" class="preset-chip" data-target="80">80%</button>
+      <button type="button" class="preset-chip" data-target="85">85%</button>
+      <button type="button" class="preset-chip" data-target="90">90%</button>
+    </div>
     <div class="modal-actions modal-actions-stack">
       <button class="btn btn-primary" id="saveTargetBtn">Save target</button>
     </div>
@@ -118,8 +131,14 @@
 
     <h3>Backup</h3>
     <div class="modal-actions modal-actions-stack">
-      <button class="btn btn-secondary" id="exportBtn">⬇️ Export data (JSON)</button>
-      <button class="btn btn-secondary" id="importBtn">⬆️ Import data (JSON)</button>
+      <button class="btn btn-secondary btn-with-icon" id="exportBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+        Export data (JSON)
+      </button>
+      <button class="btn btn-secondary btn-with-icon" id="importBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+        Import data (JSON)
+      </button>
       <input type="file" id="importFileInput" accept="application/json,.json" class="hidden" />
     </div>
 
@@ -127,7 +146,10 @@
 
     <h3>Danger zone</h3>
     <div class="modal-actions modal-actions-stack">
-      <button class="btn btn-danger" id="resetDataBtn">🗑️ Reset all data</button>
+      <button class="btn btn-danger btn-with-icon" id="resetDataBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        Reset all data
+      </button>
     </div>
 
     <div class="modal-actions">

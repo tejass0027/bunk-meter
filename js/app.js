@@ -126,6 +126,14 @@ const overallSubEl = document.getElementById("overallSub");
 const overallRingEl = document.getElementById("overallRingProgress");
 const RING_CIRCUMFERENCE = 2 * Math.PI * 52; // matches the r=52 circle in index.html
 
+const ICON_ATTEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const ICON_MISS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const ICON_UNDO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>';
+
+function buzz() {
+  if (navigator.vibrate) navigator.vibrate(12);
+}
+
 function renderOverall() {
   const totals = state.subjects.reduce(
     (acc, s) => {
@@ -150,6 +158,10 @@ function renderOverall() {
     overallSubEl.textContent = `${totals.attended} / ${totals.total} classes • target ${state.target}%`;
   }
 
+  document.getElementById("statSubjects").textContent = state.subjects.length;
+  document.getElementById("statAttended").textContent = totals.attended;
+  document.getElementById("statMissed").textContent = totals.total - totals.attended;
+
   overallCardEl.className = "overall-card status-" + status.color;
 }
 
@@ -159,7 +171,13 @@ function renderSubjects() {
   if (state.subjects.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "No subjects yet. Tap “+ Add Subject” below to start tracking.";
+    empty.innerHTML = `
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 8h7M9 12h5"/></svg>
+      </div>
+      <div class="empty-title">No subjects yet</div>
+      <div class="empty-text">Add the subjects you're taking and start tracking your attendance in one tap.</div>
+    `;
     subjectListEl.appendChild(empty);
     return;
   }
@@ -201,15 +219,18 @@ function buildSubjectCard(subject) {
     </div>
     <div class="status-pill"></div>
     <div class="subject-buttons">
-      <button class="big-btn btn-attend" data-action="attend">✅ Attended</button>
-      <button class="big-btn btn-miss" data-action="miss">❌ Missed</button>
+      <button class="big-btn btn-attend" data-action="attend">${ICON_ATTEND}Attended</button>
+      <button class="big-btn btn-miss" data-action="miss">${ICON_MISS}Missed</button>
     </div>
-    <button class="undo-btn" data-action="undo">↩️ Undo last</button>
+    <button class="undo-btn" data-action="undo">${ICON_UNDO}Undo last</button>
   `;
 
+  card.classList.add("accent-" + status.color);
   card.querySelector(".subject-name").textContent = subject.name;
   card.querySelector(".subject-pct").textContent = status.pctLabel;
-  card.querySelector(".subject-count").textContent = `${subject.attended} / ${subject.total} classes`;
+  const missed = subject.total - subject.attended;
+  card.querySelector(".subject-count").textContent =
+    `${subject.attended} attended · ${missed} missed · ${subject.total} total`;
 
   const pill = card.querySelector(".status-pill");
   pill.textContent = status.message;
@@ -449,10 +470,12 @@ subjectListEl.addEventListener("click", (e) => {
     subject.lastAction = { attended: subject.attended, total: subject.total };
     subject.attended += 1;
     subject.total += 1;
+    buzz();
     render();
   } else if (action === "miss") {
     subject.lastAction = { attended: subject.attended, total: subject.total };
     subject.total += 1;
+    buzz();
     render();
   } else if (action === "undo") {
     if (subject.lastAction) {
@@ -491,10 +514,32 @@ subjectListEl.addEventListener("click", (e) => {
 
 // ---- Settings modal ----
 const targetInput = document.getElementById("targetInput");
+const targetChips = document.querySelectorAll("#targetChips .preset-chip");
+
+function highlightTargetChip() {
+  targetChips.forEach((c) =>
+    c.classList.toggle("preset-chip-selected", Number(c.dataset.target) === Number(targetInput.value))
+  );
+}
+
+targetChips.forEach((chip) => {
+  chip.addEventListener("click", () => {
+    targetInput.value = chip.dataset.target;
+    highlightTargetChip();
+  });
+});
+targetInput.addEventListener("input", highlightTargetChip);
 
 document.getElementById("settingsBtn").addEventListener("click", () => {
   targetInput.value = state.target;
+  highlightTargetChip();
   openModal("settingsModal");
+});
+
+// Escape closes whichever modal is open
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  document.querySelectorAll(".modal-overlay:not(.hidden)").forEach((o) => o.classList.add("hidden"));
 });
 
 document.getElementById("saveTargetBtn").addEventListener("click", () => {
