@@ -258,8 +258,8 @@ function buildSubjectCard(subject) {
 
   const attendBtn = card.querySelector('[data-action="attend"]');
   const missBtn = card.querySelector('[data-action="miss"]');
-  attendBtn.disabled = markedToday;
-  missBtn.disabled = markedToday;
+  attendBtn.classList.toggle("is-locked", markedToday);
+  missBtn.classList.toggle("is-locked", markedToday);
   card.querySelector(".marked-today-note").classList.toggle("hidden", !markedToday);
 
   const undoBtn = card.querySelector('[data-action="undo"]');
@@ -310,6 +310,16 @@ confirmOkBtn.addEventListener("click", () => {
 confirmCancelBtn.addEventListener("click", () => {
   confirmModal.classList.add("hidden");
   confirmCallback = null;
+});
+
+// ---- Simple info popup with a single OK button ----
+function showAlert(title, message) {
+  document.getElementById("alertTitle").textContent = title;
+  document.getElementById("alertMessage").textContent = message;
+  document.getElementById("alertModal").classList.remove("hidden");
+}
+document.getElementById("alertOkBtn").addEventListener("click", () => {
+  document.getElementById("alertModal").classList.add("hidden");
 });
 
 // ---- Generic modal open/close helpers ----
@@ -489,8 +499,15 @@ subjectListEl.addEventListener("click", (e) => {
   const today = todayStr();
   const alreadyMarkedToday = subject.lastMarkedDate === today;
 
+  if ((action === "attend" || action === "miss") && alreadyMarkedToday) {
+    showAlert(
+      "Already marked for today",
+      `You've already marked attendance for "${subject.name}" today. You can only do this once per day. Made a mistake? Tap "Undo last" to change it.`
+    );
+    return;
+  }
+
   if (action === "attend") {
-    if (alreadyMarkedToday) return; // one mark per subject per day
     subject.lastAction = { attended: subject.attended, total: subject.total, lastMarkedDate: subject.lastMarkedDate };
     subject.attended += 1;
     subject.total += 1;
@@ -498,7 +515,6 @@ subjectListEl.addEventListener("click", (e) => {
     buzz();
     render();
   } else if (action === "miss") {
-    if (alreadyMarkedToday) return; // one mark per subject per day
     subject.lastAction = { attended: subject.attended, total: subject.total, lastMarkedDate: subject.lastMarkedDate };
     subject.total += 1;
     subject.lastMarkedDate = today;

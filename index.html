@@ -170,6 +170,20 @@
   </div>
 </div>
 
+<!-- ============ Info popup (e.g. "Already marked for today") ============ -->
+<div id="alertModal" class="modal-overlay hidden">
+  <div class="modal alert-modal">
+    <div class="alert-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+    </div>
+    <h2 id="alertTitle">Notice</h2>
+    <p id="alertMessage"></p>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="alertOkBtn" style="width:100%">Got it</button>
+    </div>
+  </div>
+</div>
+
 <!-- Small pop-up feedback after an action, e.g. "Import successful" -->
 <div id="toast" class="toast hidden"></div>
 

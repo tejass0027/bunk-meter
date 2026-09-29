@@ -425,13 +425,27 @@ main {
 }
 .big-btn:active { transform: scale(0.96); }
 .big-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
-.big-btn:disabled {
+.big-btn.is-locked {
   opacity: 0.4;
-  cursor: default;
   filter: grayscale(0.4);
   box-shadow: none;
 }
-.big-btn:disabled:active { transform: none; }
+.big-btn.is-locked:active { transform: none; }
+
+.alert-modal { text-align: center; }
+.alert-modal p { color: var(--text-muted); font-size: 14.5px; line-height: 1.5; margin: 6px 0 0; }
+.alert-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 12px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--yellow-text);
+  background: var(--yellow-bg);
+}
+.alert-icon svg { width: 28px; height: 28px; }
 
 .marked-today-note {
   font-size: 12.5px;
