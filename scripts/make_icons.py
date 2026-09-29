@@ -11,7 +11,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ICONS_DIR = os.path.join(BASE_DIR, "icons")
 os.makedirs(ICONS_DIR, exist_ok=True)
 
-BG = (20, 184, 130)       # teal/green brand color
+BG = (124, 58, 237)       # purple brand color
 BG_DARK = (13, 148, 105)  # darker shade for gradient-ish ring
 RING = (255, 255, 255)
 CHECK = (255, 255, 255)

@@ -137,11 +137,35 @@ const overallSubEl = document.getElementById("overallSub");
 const overallMsgEl = document.getElementById("overallMsg");
 const heroBarFillEl = document.getElementById("heroBarFill");
 const heroBarTargetEl = document.getElementById("heroBarTarget");
-const CARD_RING_C = 2 * Math.PI * 24; // matches the r=24 circle on each subject card
 
 const ICON_ATTEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const ICON_MISS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 const ICON_UNDO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>';
+
+// Simple SVG smiley faces used for mood (no emoji needed).
+const MOOD = { green: "happy", yellow: "meh", red: "sad", neutral: "sleepy" };
+
+function faceSvg(mood, fill, ink) {
+  const eyes = mood === "sleepy"
+    ? `<path d="M16 27H27M37 27H48" fill="none" stroke="${ink}" stroke-width="4" stroke-linecap="round"/>`
+    : `<circle cx="23" cy="26" r="3.8" fill="${ink}"/><circle cx="41" cy="26" r="3.8" fill="${ink}"/>`;
+  const mouths = {
+    happy: "M19 38Q32 53 45 38",
+    meh: "M22 43H42",
+    sad: "M22 48Q32 37 42 48",
+    sleepy: "M25 42Q32 47 39 42",
+  };
+  return `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="${fill}"/>${eyes}` +
+    `<path d="${mouths[mood]}" fill="none" stroke="${ink}" stroke-width="4" stroke-linecap="round"/></svg>`;
+}
+
+// Each subject gets its own bright colour tile, picked from its name so it stays the same.
+const TILE_COLORS = ["#7C3AED", "#3B82F6", "#F97316", "#14B8A6", "#A855F7", "#0EA5E9"];
+function tileColor(name) {
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return TILE_COLORS[h % TILE_COLORS.length];
+}
 
 function buzz() {
   if (navigator.vibrate) navigator.vibrate(12);
@@ -161,6 +185,7 @@ function renderOverall() {
   overallPctEl.textContent = status.pctLabel;
 
   const pct = totals.total > 0 ? totals.attended / totals.total : 0;
+  document.getElementById("heroFace").innerHTML = faceSvg(MOOD[status.color], "#fff", "#1F1147");
   heroBarFillEl.style.width = Math.min(100, pct * 100) + "%";
   heroBarTargetEl.style.left = state.target + "%";
   document.getElementById("heroTarget").textContent = `Target ${state.target}%`;
@@ -228,13 +253,7 @@ function buildSubjectCard(subject) {
 
   card.innerHTML = `
     <div class="sc-top">
-      <div class="sc-ring">
-        <svg viewBox="0 0 56 56" aria-hidden="true">
-          <circle class="sc-ring-track" cx="28" cy="28" r="24" />
-          <circle class="sc-ring-fill" cx="28" cy="28" r="24" />
-        </svg>
-        <span class="sc-ring-text"></span>
-      </div>
+      <div class="sc-tile"></div>
       <div class="sc-info">
         <div class="subject-name"></div>
         <div class="subject-count"></div>
@@ -242,6 +261,13 @@ function buildSubjectCard(subject) {
       <button class="icon-btn" data-action="menu" aria-label="More options" title="More">
         <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
       </button>
+    </div>
+    <div class="sc-meter">
+      <div class="sc-pct"></div>
+      <div class="sc-bar">
+        <div class="sc-bar-fill"></div>
+        <div class="sc-bar-target"></div>
+      </div>
     </div>
     <div class="status-pill"></div>
     <div class="subject-buttons">
@@ -260,16 +286,23 @@ function buildSubjectCard(subject) {
   card.querySelector(".subject-count").textContent =
     `${subject.attended} attended · ${missed} missed`;
 
+  const tile = card.querySelector(".sc-tile");
+  tile.textContent = (subject.name.trim()[0] || "?").toUpperCase();
+  tile.style.background = tileColor(subject.name);
+
   const pct = subject.total > 0 ? subject.attended / subject.total : 0;
-  card.querySelector(".sc-ring-text").textContent =
-    subject.total > 0 ? Math.round(pct * 100) + "%" : "—";
-  const ringFill = card.querySelector(".sc-ring-fill");
-  ringFill.style.strokeDasharray = String(CARD_RING_C);
-  ringFill.style.strokeDashoffset = String(CARD_RING_C * (1 - Math.min(1, pct)));
+  card.querySelector(".sc-pct").textContent = subject.total > 0 ? Math.round(pct * 100) + "%" : "—";
+  card.querySelector(".sc-bar-fill").style.width = Math.min(100, pct * 100) + "%";
+  card.querySelector(".sc-bar-target").style.left = state.target + "%";
 
   const pill = card.querySelector(".status-pill");
-  pill.textContent = status.message;
   pill.className = "status-pill status-" + status.color;
+  const pillFace = document.createElement("span");
+  pillFace.className = "pill-face";
+  pillFace.innerHTML = faceSvg(MOOD[status.color], "currentColor", "#fff");
+  const pillText = document.createElement("span");
+  pillText.textContent = status.message;
+  pill.append(pillFace, pillText);
 
   const markedToday = subject.lastMarkedDate === todayStr();
 

@@ -12,7 +12,7 @@
    the browser fetch and store the new versions.
    ========================================================================== */
 
-const CACHE_NAME = "bunkmeter-cache-v11";
+const CACHE_NAME = "bunkmeter-cache-v12";
 
 const APP_SHELL = [
   "./",

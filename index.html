@@ -8,7 +8,7 @@
 
 <!-- PWA hookup: tells the browser this app can be installed -->
 <link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#14b882" />
+<meta name="theme-color" content="#7C3AED" />
 <link rel="icon" href="icons/icon-192.png" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -27,8 +27,8 @@
       <path d="M14 25 L21 32 L34 17" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
       <defs>
         <linearGradient id="brandGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stop-color="#2dd4a7" />
-          <stop offset="1" stop-color="#0f9d70" />
+          <stop offset="0" stop-color="#A78BFA" />
+          <stop offset="1" stop-color="#7C3AED" />
         </linearGradient>
       </defs>
     </svg>
@@ -51,8 +51,13 @@
       <span class="hero-label">Overall attendance</span>
       <span class="hero-target" id="heroTarget">Target 75%</span>
     </div>
-    <div class="hero-pct" id="overallPct">—</div>
-    <div class="hero-sub" id="overallSub">No subjects yet</div>
+    <div class="hero-mid">
+      <div>
+        <div class="hero-pct" id="overallPct">—</div>
+        <div class="hero-sub" id="overallSub">No subjects yet</div>
+      </div>
+      <div class="hero-face" id="heroFace"></div>
+    </div>
     <div class="hero-bar">
       <div class="hero-bar-fill" id="heroBarFill"></div>
       <div class="hero-bar-target" id="heroBarTarget"></div>
