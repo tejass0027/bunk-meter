@@ -134,8 +134,10 @@ const subjectListEl = document.getElementById("subjectList");
 const overallCardEl = document.getElementById("overallCard");
 const overallPctEl = document.getElementById("overallPct");
 const overallSubEl = document.getElementById("overallSub");
-const overallRingEl = document.getElementById("overallRingProgress");
-const RING_CIRCUMFERENCE = 2 * Math.PI * 52; // matches the r=52 circle in index.html
+const overallMsgEl = document.getElementById("overallMsg");
+const heroBarFillEl = document.getElementById("heroBarFill");
+const heroBarTargetEl = document.getElementById("heroBarTarget");
+const CARD_RING_C = 2 * Math.PI * 24; // matches the r=24 circle on each subject card
 
 const ICON_ATTEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const ICON_MISS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
@@ -159,14 +161,19 @@ function renderOverall() {
   overallPctEl.textContent = status.pctLabel;
 
   const pct = totals.total > 0 ? totals.attended / totals.total : 0;
-  overallRingEl.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - pct));
+  heroBarFillEl.style.width = Math.min(100, pct * 100) + "%";
+  heroBarTargetEl.style.left = state.target + "%";
+  document.getElementById("heroTarget").textContent = `Target ${state.target}%`;
 
   if (state.subjects.length === 0) {
-    overallSubEl.textContent = "Add a subject to get started";
+    overallSubEl.textContent = "No subjects yet";
+    overallMsgEl.textContent = "Add your subjects to see how many classes you can skip.";
   } else if (totals.total === 0) {
     overallSubEl.textContent = "No classes recorded yet";
+    overallMsgEl.textContent = "Mark your first class to get started.";
   } else {
-    overallSubEl.textContent = `${totals.attended} / ${totals.total} classes • target ${state.target}%`;
+    overallSubEl.textContent = `${totals.attended} of ${totals.total} classes attended`;
+    overallMsgEl.textContent = status.message;
   }
 
   document.getElementById("todayDate").textContent = new Date().toLocaleDateString(undefined, {
@@ -182,7 +189,7 @@ function renderOverall() {
   document.getElementById("statAttended").textContent = totals.attended;
   document.getElementById("statMissed").textContent = totals.total - totals.attended;
 
-  overallCardEl.className = "overall-card status-" + status.color;
+  overallCardEl.className = "hero status-" + status.color;
 }
 
 let renderedIds = new Set(); // cards already on screen, so only new ones animate in
@@ -220,27 +227,21 @@ function buildSubjectCard(subject) {
   card.dataset.id = subject.id;
 
   card.innerHTML = `
-    <div class="subject-card-head">
-      <div class="subject-name"></div>
-      <div class="subject-head-actions">
-        <button class="icon-btn" data-action="edit-counts" title="Edit counts">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        </button>
-        <button class="icon-btn" data-action="rename" title="Rename">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-        </button>
-        <button class="icon-btn" data-action="delete" title="Delete">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-        </button>
+    <div class="sc-top">
+      <div class="sc-ring">
+        <svg viewBox="0 0 56 56" aria-hidden="true">
+          <circle class="sc-ring-track" cx="28" cy="28" r="24" />
+          <circle class="sc-ring-fill" cx="28" cy="28" r="24" />
+        </svg>
+        <span class="sc-ring-text"></span>
       </div>
-    </div>
-    <div class="subject-stats-row">
-      <span class="subject-pct"></span>
-      <span class="subject-count"></span>
-    </div>
-    <div class="progress-bar-wrap">
-      <div class="progress-bar-fill"></div>
-      <div class="progress-target-marker"></div>
+      <div class="sc-info">
+        <div class="subject-name"></div>
+        <div class="subject-count"></div>
+      </div>
+      <button class="icon-btn" data-action="menu" aria-label="More options" title="More">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
+      </button>
     </div>
     <div class="status-pill"></div>
     <div class="subject-buttons">
@@ -253,22 +254,22 @@ function buildSubjectCard(subject) {
     </div>
   `;
 
-  card.classList.add("accent-" + status.color);
+  card.classList.add("status-" + status.color);
   card.querySelector(".subject-name").textContent = subject.name;
-  card.querySelector(".subject-pct").textContent = status.pctLabel;
   const missed = subject.total - subject.attended;
   card.querySelector(".subject-count").textContent =
-    `${subject.attended} attended · ${missed} missed · ${subject.total} total`;
+    `${subject.attended} attended · ${missed} missed`;
+
+  const pct = subject.total > 0 ? subject.attended / subject.total : 0;
+  card.querySelector(".sc-ring-text").textContent =
+    subject.total > 0 ? Math.round(pct * 100) + "%" : "—";
+  const ringFill = card.querySelector(".sc-ring-fill");
+  ringFill.style.strokeDasharray = String(CARD_RING_C);
+  ringFill.style.strokeDashoffset = String(CARD_RING_C * (1 - Math.min(1, pct)));
 
   const pill = card.querySelector(".status-pill");
   pill.textContent = status.message;
   pill.className = "status-pill status-" + status.color;
-
-  const pct = subject.total > 0 ? subject.attended / subject.total : 0;
-  const fill = card.querySelector(".progress-bar-fill");
-  fill.style.width = Math.min(100, pct * 100) + "%";
-  fill.className = "progress-bar-fill status-" + status.color;
-  card.querySelector(".progress-target-marker").style.left = state.target + "%";
 
   const markedToday = subject.lastMarkedDate === todayStr();
 
@@ -513,15 +514,34 @@ saveCountsBtn.addEventListener("click", () => {
 });
 
 // ---- Subject card button clicks (event delegation) ----
+let menuSubjectId = null;
+
 subjectListEl.addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-action]");
   if (!btn) return;
   const card = e.target.closest(".subject-card");
-  const id = card.dataset.id;
-  const subject = state.subjects.find((s) => s.id === id);
+  const subject = state.subjects.find((s) => s.id === card.dataset.id);
   if (!subject) return;
-  const action = btn.dataset.action;
 
+  if (btn.dataset.action === "menu") {
+    menuSubjectId = subject.id;
+    document.getElementById("subjectMenuTitle").textContent = subject.name;
+    openModal("subjectMenuModal");
+    return;
+  }
+  runSubjectAction(btn.dataset.action, subject);
+});
+
+document.querySelectorAll("[data-menu-action]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const subject = state.subjects.find((s) => s.id === menuSubjectId);
+    closeModal("subjectMenuModal");
+    if (subject) runSubjectAction(btn.dataset.menuAction, subject);
+  });
+});
+
+function runSubjectAction(action, subject) {
+  const id = subject.id;
   const today = todayStr();
   const alreadyMarkedToday = subject.lastMarkedDate === today;
 
@@ -580,7 +600,7 @@ subjectListEl.addEventListener("click", (e) => {
       }
     );
   }
-});
+}
 
 // ---- Settings modal ----
 const targetInput = document.getElementById("targetInput");
