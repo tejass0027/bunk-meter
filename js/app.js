@@ -12,9 +12,20 @@ const STORAGE_KEY = "bunkmeter_data_v1";
 
 /* ---------------------------------------------------------------------
    1. DATA: what we store and how we load/save it
-   A "subject" looks like: { id, name, attended, total, lastAction }
+   A "subject" looks like:
+     { id, name, attended, total, lastAction, lastMarkedDate }
    lastAction remembers the previous attended/total so "Undo last" works.
+   lastMarkedDate is the date (YYYY-MM-DD) Attended/Missed was last tapped,
+   used to only allow one tap per subject per day.
    --------------------------------------------------------------------- */
+
+function todayStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
 function defaultData() {
   return {
@@ -218,6 +229,7 @@ function buildSubjectCard(subject) {
       <div class="progress-target-marker"></div>
     </div>
     <div class="status-pill"></div>
+    <div class="marked-today-note hidden">Already marked for today — tap Undo to change it.</div>
     <div class="subject-buttons">
       <button class="big-btn btn-attend" data-action="attend">${ICON_ATTEND}Attended</button>
       <button class="big-btn btn-miss" data-action="miss">${ICON_MISS}Missed</button>
@@ -242,8 +254,16 @@ function buildSubjectCard(subject) {
   fill.className = "progress-bar-fill status-" + status.color;
   card.querySelector(".progress-target-marker").style.left = state.target + "%";
 
+  const markedToday = subject.lastMarkedDate === todayStr();
+
+  const attendBtn = card.querySelector('[data-action="attend"]');
+  const missBtn = card.querySelector('[data-action="miss"]');
+  attendBtn.disabled = markedToday;
+  missBtn.disabled = markedToday;
+  card.querySelector(".marked-today-note").classList.toggle("hidden", !markedToday);
+
   const undoBtn = card.querySelector('[data-action="undo"]');
-  undoBtn.disabled = !subject.lastAction;
+  undoBtn.disabled = !(subject.lastAction && markedToday);
 
   return card;
 }
@@ -466,21 +486,29 @@ subjectListEl.addEventListener("click", (e) => {
   if (!subject) return;
   const action = btn.dataset.action;
 
+  const today = todayStr();
+  const alreadyMarkedToday = subject.lastMarkedDate === today;
+
   if (action === "attend") {
-    subject.lastAction = { attended: subject.attended, total: subject.total };
+    if (alreadyMarkedToday) return; // one mark per subject per day
+    subject.lastAction = { attended: subject.attended, total: subject.total, lastMarkedDate: subject.lastMarkedDate };
     subject.attended += 1;
     subject.total += 1;
+    subject.lastMarkedDate = today;
     buzz();
     render();
   } else if (action === "miss") {
-    subject.lastAction = { attended: subject.attended, total: subject.total };
+    if (alreadyMarkedToday) return; // one mark per subject per day
+    subject.lastAction = { attended: subject.attended, total: subject.total, lastMarkedDate: subject.lastMarkedDate };
     subject.total += 1;
+    subject.lastMarkedDate = today;
     buzz();
     render();
   } else if (action === "undo") {
-    if (subject.lastAction) {
+    if (subject.lastAction && alreadyMarkedToday) {
       subject.attended = subject.lastAction.attended;
       subject.total = subject.lastAction.total;
+      subject.lastMarkedDate = subject.lastAction.lastMarkedDate;
       subject.lastAction = null;
       render();
     }
