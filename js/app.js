@@ -169,12 +169,23 @@ function renderOverall() {
     overallSubEl.textContent = `${totals.attended} / ${totals.total} classes • target ${state.target}%`;
   }
 
+  document.getElementById("todayDate").textContent = new Date().toLocaleDateString(undefined, {
+    weekday: "long", day: "numeric", month: "long",
+  });
+  const todayProgressEl = document.getElementById("todayProgress");
+  const markedCount = state.subjects.filter((s) => s.lastMarkedDate === todayStr()).length;
+  todayProgressEl.classList.toggle("hidden", state.subjects.length === 0);
+  todayProgressEl.textContent = `${markedCount} of ${state.subjects.length} marked today`;
+  todayProgressEl.classList.toggle("all-done", state.subjects.length > 0 && markedCount === state.subjects.length);
+
   document.getElementById("statSubjects").textContent = state.subjects.length;
   document.getElementById("statAttended").textContent = totals.attended;
   document.getElementById("statMissed").textContent = totals.total - totals.attended;
 
   overallCardEl.className = "overall-card status-" + status.color;
 }
+
+let renderedIds = new Set(); // cards already on screen, so only new ones animate in
 
 function renderSubjects() {
   subjectListEl.innerHTML = "";
@@ -194,8 +205,11 @@ function renderSubjects() {
   }
 
   for (const subject of state.subjects) {
-    subjectListEl.appendChild(buildSubjectCard(subject));
+    const card = buildSubjectCard(subject);
+    if (!renderedIds.has(subject.id)) card.classList.add("card-enter");
+    subjectListEl.appendChild(card);
   }
+  renderedIds = new Set(state.subjects.map((s) => s.id));
 }
 
 function buildSubjectCard(subject) {
@@ -229,12 +243,14 @@ function buildSubjectCard(subject) {
       <div class="progress-target-marker"></div>
     </div>
     <div class="status-pill"></div>
-    <div class="marked-today-note hidden">Already marked for today — tap Undo to change it.</div>
     <div class="subject-buttons">
       <button class="big-btn btn-attend" data-action="attend">${ICON_ATTEND}Attended</button>
       <button class="big-btn btn-miss" data-action="miss">${ICON_MISS}Missed</button>
     </div>
-    <button class="undo-btn" data-action="undo">${ICON_UNDO}Undo last</button>
+    <div class="today-row hidden">
+      <span class="today-label"></span>
+      <button class="undo-btn" data-action="undo">${ICON_UNDO}Undo</button>
+    </div>
   `;
 
   card.classList.add("accent-" + status.color);
@@ -258,12 +274,22 @@ function buildSubjectCard(subject) {
 
   const attendBtn = card.querySelector('[data-action="attend"]');
   const missBtn = card.querySelector('[data-action="miss"]');
+  // If the last tap raised "attended", it was an Attended tap; otherwise Missed.
+  const chose = subject.lastAction
+    ? (subject.attended > subject.lastAction.attended ? "attend" : "miss")
+    : null;
   attendBtn.classList.toggle("is-locked", markedToday);
   missBtn.classList.toggle("is-locked", markedToday);
-  card.querySelector(".marked-today-note").classList.toggle("hidden", !markedToday);
+  attendBtn.classList.toggle("is-chosen", markedToday && chose === "attend");
+  missBtn.classList.toggle("is-chosen", markedToday && chose === "miss");
 
-  const undoBtn = card.querySelector('[data-action="undo"]');
-  undoBtn.disabled = !(subject.lastAction && markedToday);
+  const todayRow = card.querySelector(".today-row");
+  todayRow.classList.toggle("hidden", !markedToday);
+  todayRow.querySelector(".today-label").textContent =
+    chose === "attend" ? "Marked as attended today"
+    : chose === "miss" ? "Marked as missed today"
+    : "Already marked today";
+  card.querySelector('[data-action="undo"]').disabled = !subject.lastAction;
 
   return card;
 }

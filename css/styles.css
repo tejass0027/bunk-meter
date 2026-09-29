@@ -262,9 +262,8 @@ main {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 18px;
+  padding: 16px 16px 16px 20px;
   box-shadow: var(--shadow-sm);
-  animation: card-in 0.25s ease both;
   position: relative;
   overflow: hidden;
 }
@@ -282,6 +281,8 @@ main {
 .accent-yellow { --accent: var(--yellow-solid); }
 .accent-red { --accent: var(--red-solid); }
 .accent-neutral { --accent: var(--neutral-solid); }
+
+.subject-card.card-enter { animation: card-in 0.25s ease both; }
 
 @keyframes card-in {
   from { opacity: 0; transform: translateY(6px); }
@@ -447,10 +448,58 @@ main {
 }
 .alert-icon svg { width: 28px; height: 28px; }
 
-.marked-today-note {
+.big-btn.is-chosen {
+  opacity: 1;
+  filter: none;
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px currentColor;
+}
+.btn-attend.is-chosen { color: #fff; box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--green-solid); }
+.btn-miss.is-chosen { color: #fff; box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--red-solid); }
+
+.today-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.today-label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+
+.today-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 2px 14px;
+}
+.today-date { font-size: 15px; font-weight: 700; color: var(--text); }
+.today-progress {
   font-size: 12.5px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
   color: var(--text-muted);
-  margin: -2px 0 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.today-progress.all-done {
+  color: var(--green-text);
+  background: var(--green-bg);
+  border-color: var(--green-border);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 110px;
+  background: linear-gradient(to bottom, transparent, var(--bg) 65%);
+  pointer-events: none;
+  z-index: 5;
 }
 
 .btn-attend {
@@ -466,13 +515,11 @@ main {
 .btn-miss:active { filter: brightness(0.95); }
 
 .undo-btn {
-  width: 100%;
-  margin-top: 10px;
   background: var(--surface-2);
-  color: var(--text-muted);
+  color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px;
+  border-radius: 10px;
+  padding: 8px 14px;
   font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
@@ -493,6 +540,7 @@ main {
 /* ---------- Floating add button ---------- */
 .fab {
   position: fixed;
+  z-index: 6;
   left: 16px;
   right: 16px;
   bottom: calc(16px + env(safe-area-inset-bottom, 0px));
