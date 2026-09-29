@@ -661,12 +661,24 @@ importFileInput.addEventListener("change", () => {
 /* ---------------------------------------------------------------------
    5. PWA: register the service worker so the app works offline and can
    be installed. This silently does nothing on browsers without support.
+
+   Because the app is cached for offline use, a phone that already has it
+   open can otherwise keep running an old cached version even after a new
+   one is deployed. To fix that, once a newly-installed service worker
+   takes over, we reload the page once so the fresh version is picked up.
    --------------------------------------------------------------------- */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js").catch((err) => {
       console.warn("Service worker registration failed:", err);
     });
+  });
+
+  let reloadedForUpdate = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloadedForUpdate) return;
+    reloadedForUpdate = true;
+    window.location.reload();
   });
 }
 
