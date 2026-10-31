@@ -286,10 +286,12 @@ function renderViewControls() {
     todayBtn.classList.toggle("active", viewMode === "today");
     allBtn.classList.toggle("active", viewMode === "all");
   }
-  document.getElementById("timetablePrompt").classList.toggle(
-    "hidden",
-    !(state.subjects.length > 0 && !hasTimetable() && !state.hidePrompt)
-  );
+  document.getElementById("ttCtaTitle").textContent = hasTimetable()
+    ? "Edit weekly timetable"
+    : "Add your weekly timetable";
+  document.getElementById("ttCtaSub").textContent = hasTimetable()
+    ? "Change which subjects you have each day"
+    : "Show only the subjects you have each day";
 }
 
 let renderedIds = new Set(); // cards already on screen, so only new ones animate in
@@ -767,7 +769,15 @@ function renderTimetableEditor() {
     const note = document.createElement("p");
     note.className = "modal-hint";
     note.textContent = "Add your subjects first, then come back to build your timetable.";
-    ttChipsEl.appendChild(note);
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "btn btn-primary";
+    addBtn.textContent = "Add subjects";
+    addBtn.addEventListener("click", () => {
+      closeModal("timetableModal");
+      document.getElementById("addSubjectBtn").click();
+    });
+    ttChipsEl.append(note, addBtn);
     return;
   }
 
@@ -814,11 +824,7 @@ function openTimetable() {
 }
 
 document.getElementById("timetableBtn").addEventListener("click", openTimetable);
-document.getElementById("setupTimetableBtn").addEventListener("click", openTimetable);
-document.getElementById("dismissPromptBtn").addEventListener("click", () => {
-  state.hidePrompt = true;
-  render();
-});
+document.getElementById("timetableCta").addEventListener("click", openTimetable);
 
 document.getElementById("viewSwitch").addEventListener("click", (e) => {
   const btn = e.target.closest("[data-view]");
