@@ -742,6 +742,8 @@ function runSubjectAction(action, subject) {
 // ---- Weekly timetable editor ----
 const dayTabsEl = document.getElementById("dayTabs");
 const ttChipsEl = document.getElementById("ttChips");
+const ttDayListEl = document.getElementById("ttDayList");
+const ttExistingEl = document.getElementById("ttExisting");
 let ttDay = "mon"; // day currently being edited
 
 function renderTimetableEditor() {
@@ -762,41 +764,69 @@ function renderTimetableEditor() {
     dayTabsEl.appendChild(tab);
   }
 
-  document.getElementById("dayLabel").textContent = `Subjects on ${DAY_NAMES[ttDay]} — tap in class order`;
-  ttChipsEl.innerHTML = "";
+  document.getElementById("dayLabel").textContent = `${DAY_NAMES[ttDay]}'s subjects`;
+  document.getElementById("ttInput").placeholder = `Type a subject for ${DAY_NAMES[ttDay]}`;
 
-  if (state.subjects.length === 0) {
-    const note = document.createElement("p");
-    note.className = "modal-hint";
-    note.textContent = "Add your subjects first, then come back to build your timetable.";
-    const addBtn = document.createElement("button");
-    addBtn.type = "button";
-    addBtn.className = "btn btn-primary";
-    addBtn.textContent = "Add subjects";
-    addBtn.addEventListener("click", () => {
-      closeModal("timetableModal");
-      document.getElementById("addSubjectBtn").click();
-    });
-    ttChipsEl.append(note, addBtn);
-    return;
+  // This day's subjects, in order, each with a remove button
+  ttDayListEl.innerHTML = "";
+  const todays = subjectsOn(ttDay);
+  if (todays.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "day-empty";
+    empty.textContent = `No subjects added for ${DAY_NAMES[ttDay]} yet.`;
+    ttDayListEl.appendChild(empty);
   }
+  todays.forEach((subject, i) => {
+    const row = document.createElement("div");
+    row.className = "day-row";
+    const num = document.createElement("span");
+    num.className = "day-row-num";
+    num.textContent = String(i + 1);
+    const name = document.createElement("span");
+    name.className = "day-row-name";
+    name.textContent = subject.name;
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "day-row-remove";
+    remove.dataset.remove = subject.id;
+    remove.setAttribute("aria-label", `Remove ${subject.name} from ${DAY_NAMES[ttDay]}`);
+    remove.innerHTML = ICON_MISS;
+    row.append(num, name, remove);
+    ttDayListEl.appendChild(row);
+  });
 
-  const dayList = state.timetable[ttDay];
-  for (const subject of state.subjects) {
-    const idx = dayList.indexOf(subject.id);
+  // Quick-pick: subjects you've already added that aren't on this day yet
+  ttChipsEl.innerHTML = "";
+  const onThisDay = new Set(state.timetable[ttDay]);
+  const available = state.subjects.filter((s) => !onThisDay.has(s.id));
+  ttExistingEl.classList.toggle("hidden", available.length === 0);
+  for (const subject of available) {
     const chip = document.createElement("button");
     chip.type = "button";
-    chip.className = "preset-chip" + (idx >= 0 ? " preset-chip-selected" : "");
+    chip.className = "preset-chip";
     chip.dataset.id = subject.id;
-    if (idx >= 0) {
-      const order = document.createElement("span");
-      order.className = "chip-order";
-      order.textContent = String(idx + 1);
-      chip.append(order);
-    }
-    chip.append(subject.name);
+    chip.textContent = subject.name;
     ttChipsEl.appendChild(chip);
   }
+}
+
+// Add a subject to the day being edited. Reuses an existing subject with the
+// same name, otherwise creates a new one, so you can just type what you have.
+function addToDay(rawName) {
+  const name = rawName.trim();
+  if (!name) return;
+  let subject = state.subjects.find((s) => s.name.toLowerCase() === name.toLowerCase());
+  if (!subject) {
+    subject = { id: makeId(), name, attended: 0, total: 0, lastAction: null };
+    state.subjects.push(subject);
+  }
+  if (state.timetable[ttDay].includes(subject.id)) {
+    showToast(`${subject.name} is already on ${DAY_NAMES[ttDay]}`);
+    return;
+  }
+  state.timetable[ttDay].push(subject.id);
+  render();
+  renderTimetableEditor();
 }
 
 dayTabsEl.addEventListener("click", (e) => {
@@ -809,18 +839,40 @@ dayTabsEl.addEventListener("click", (e) => {
 ttChipsEl.addEventListener("click", (e) => {
   const chip = e.target.closest(".preset-chip");
   if (!chip) return;
-  const list = state.timetable[ttDay];
-  const idx = list.indexOf(chip.dataset.id);
-  if (idx >= 0) list.splice(idx, 1);
-  else list.push(chip.dataset.id);
+  state.timetable[ttDay].push(chip.dataset.id);
   render();
   renderTimetableEditor();
 });
 
+ttDayListEl.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-remove]");
+  if (!btn) return;
+  state.timetable[ttDay] = state.timetable[ttDay].filter((id) => id !== btn.dataset.remove);
+  render();
+  renderTimetableEditor();
+});
+
+const ttInputEl = document.getElementById("ttInput");
+function submitTimetableInput() {
+  addToDay(ttInputEl.value);
+  ttInputEl.value = "";
+  ttInputEl.focus();
+}
+document.getElementById("ttAddBtn").addEventListener("click", submitTimetableInput);
+ttInputEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    submitTimetableInput();
+  }
+});
+
 function openTimetable() {
   ttDay = todayKey();
+  viewMode = "today"; // after editing, show the day's own subjects
+  ttInputEl.value = "";
   renderTimetableEditor();
   openModal("timetableModal");
+  render();
 }
 
 document.getElementById("timetableBtn").addEventListener("click", openTimetable);

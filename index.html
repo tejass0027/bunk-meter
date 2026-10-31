@@ -105,10 +105,18 @@
 <div id="timetableModal" class="modal-overlay hidden">
   <div class="modal">
     <h2>Weekly timetable</h2>
-    <p class="modal-hint">Choose a day, then tap the subjects you have that day, in the order of your classes. The app will show only those subjects on that day.</p>
+    <p class="modal-hint">Choose a day and type the subjects you have that day. Each day the app shows only that day's subjects.</p>
     <div class="day-tabs" id="dayTabs"></div>
     <span class="field-label" id="dayLabel"></span>
-    <div class="preset-chips tt-chips" id="ttChips"></div>
+    <div class="day-list" id="ttDayList"></div>
+    <div class="tt-add">
+      <input type="text" id="ttInput" maxlength="60" autocomplete="off" />
+      <button type="button" class="btn btn-primary" id="ttAddBtn">Add</button>
+    </div>
+    <div id="ttExisting">
+      <span class="field-label">Or pick one you already added</span>
+      <div class="preset-chips tt-chips" id="ttChips"></div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-primary" data-close-modal="timetableModal">Done</button>
     </div>
