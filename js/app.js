@@ -243,8 +243,6 @@ function renderOverall() {
 }
 
 /* ---- Timetable helpers: which subjects belong to today ---- */
-let viewMode = "today"; // "today" = only today's timetable, "all" = every subject
-
 function todayKey() {
   return DAY_KEYS[new Date().getDay()];
 }
@@ -264,8 +262,7 @@ function todaysSubjects() {
 }
 
 function visibleSubjects() {
-  if (!hasTimetable() || viewMode === "all") return state.subjects;
-  return todaysSubjects();
+  return hasTimetable() ? todaysSubjects() : state.subjects;
 }
 
 function removeFromTimetable(id) {
@@ -275,17 +272,6 @@ function removeFromTimetable(id) {
 }
 
 function renderViewControls() {
-  const showSwitch = state.subjects.length > 0 && hasTimetable();
-  const switchEl = document.getElementById("viewSwitch");
-  switchEl.classList.toggle("hidden", !showSwitch);
-  if (showSwitch) {
-    const todayBtn = switchEl.querySelector('[data-view="today"]');
-    const allBtn = switchEl.querySelector('[data-view="all"]');
-    todayBtn.textContent = `Today · ${todaysSubjects().length}`;
-    allBtn.textContent = `All · ${state.subjects.length}`;
-    todayBtn.classList.toggle("active", viewMode === "today");
-    allBtn.classList.toggle("active", viewMode === "all");
-  }
   document.getElementById("ttCtaTitle").textContent = hasTimetable()
     ? "Edit weekly timetable"
     : "Add your weekly timetable";
@@ -377,12 +363,6 @@ function buildSubjectCard(subject) {
   card.classList.add("status-" + status.color);
   const nameEl = card.querySelector(".subject-name");
   nameEl.textContent = subject.name;
-  if (hasTimetable() && viewMode === "all" && state.timetable[todayKey()].includes(subject.id)) {
-    const chip = document.createElement("span");
-    chip.className = "today-chip";
-    chip.textContent = "Today";
-    nameEl.append(" ", chip);
-  }
   const missed = subject.total - subject.attended;
   card.querySelector(".subject-count").textContent =
     `${subject.attended} attended · ${missed} missed`;
@@ -602,20 +582,15 @@ saveSubjectBtn.addEventListener("click", () => {
   let added = 0;
   for (const name of names) {
     if (existing.has(name.toLowerCase())) continue; // skip duplicates
-    state.subjects.push({
-      id: makeId(),
-      name,
-      attended: 0,
-      total: 0,
-      lastAction: null,
-    });
+    const id = makeId();
+    state.subjects.push({ id, name, attended: 0, total: 0, lastAction: null });
+    // With a timetable only today's subjects show, so a new one joins today.
+    if (hasTimetable()) state.timetable[todayKey()].push(id);
     existing.add(name.toLowerCase());
     added++;
   }
 
   closeModal("subjectModal");
-  // New subjects aren't in the timetable yet, so show everything so they're visible.
-  if (hasTimetable()) viewMode = "all";
   render();
   showToast(added === 1 ? "Added 1 subject" : `Added ${added} subjects`);
 });
@@ -821,7 +796,6 @@ function saveWeekForm() {
   }
 
   state.timetable = timetable;
-  viewMode = "today";
   closeModal("timetableModal");
   render();
   showToast(created > 0 ? `Timetable saved — ${created} new subject${created === 1 ? "" : "s"} added` : "Timetable saved");
@@ -843,13 +817,6 @@ function openTimetable(firstRun) {
 document.getElementById("timetableBtn").addEventListener("click", () => openTimetable(false));
 document.getElementById("timetableCta").addEventListener("click", () => openTimetable(false));
 document.getElementById("ttSaveBtn").addEventListener("click", saveWeekForm);
-
-document.getElementById("viewSwitch").addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-view]");
-  if (!btn) return;
-  viewMode = btn.dataset.view;
-  render();
-});
 
 // ---- Settings modal ----
 const targetInput = document.getElementById("targetInput");
