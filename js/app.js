@@ -742,33 +742,47 @@ function runSubjectAction(action, subject) {
 // ---- Weekly timetable: one form for the whole week ----
 const weekFormEl = document.getElementById("weekForm");
 const weekInputs = {}; // day key -> textarea
+const DAY_COLORS = {
+  mon: "#7C3AED", tue: "#3B82F6", wed: "#F97316", thu: "#14B8A6",
+  fri: "#EC4899", sat: "#A855F7", sun: "#0EA5E9",
+};
 
 function buildWeekForm() {
   weekFormEl.innerHTML = "";
   for (const key of TIMETABLE_ORDER) {
     const row = document.createElement("label");
-    row.className = "week-row";
+    row.className = "week-row" + (key === todayKey() ? " is-today" : "");
 
-    const head = document.createElement("span");
-    head.className = "week-label";
-    head.textContent = DAY_NAMES[key];
+    const badge = document.createElement("span");
+    badge.className = "week-day";
+    badge.style.background = DAY_COLORS[key];
+    const short = document.createElement("b");
+    short.textContent = DAY_NAMES[key].slice(0, 3);
+    badge.append(short);
     if (key === todayKey()) {
-      const chip = document.createElement("span");
-      chip.className = "today-chip";
-      chip.textContent = "Today";
-      head.append(" ", chip);
+      const today = document.createElement("i");
+      today.textContent = "today";
+      badge.append(today);
     }
 
     const box = document.createElement("textarea");
-    box.rows = 2;
+    box.rows = 1;
     box.maxLength = 400;
-    box.placeholder = "e.g. Maths, Physics, Chemistry";
+    box.placeholder = "e.g. Maths, Physics";
+    box.setAttribute("aria-label", `${DAY_NAMES[key]} subjects`);
     box.value = subjectsOn(key).map((s) => s.name).join(", ");
+    box.addEventListener("input", () => growBox(box));
     weekInputs[key] = box;
 
-    row.append(head, box);
+    row.append(badge, box);
     weekFormEl.appendChild(row);
   }
+}
+
+// Make a textarea exactly as tall as its text (no scrollbars, no resize handle)
+function growBox(box) {
+  box.style.height = "auto";
+  box.style.height = box.scrollHeight + "px";
 }
 
 // "Maths, Physics\nChem" -> ["Maths", "Physics", "Chem"] (no empty or repeated names)
@@ -822,7 +836,8 @@ function openTimetable(firstRun) {
   document.getElementById("ttCancelBtn").textContent = firstRun ? "Skip for now" : "Cancel";
   buildWeekForm();
   openModal("timetableModal");
-  weekFormEl.parentElement.scrollTop = 0;
+  Object.values(weekInputs).forEach(growBox); // needs the modal visible to measure
+  weekFormEl.scrollTop = 0;
 }
 
 document.getElementById("timetableBtn").addEventListener("click", () => openTimetable(false));

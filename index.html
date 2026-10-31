@@ -103,11 +103,16 @@
 
 <!-- ============ Weekly timetable editor ============ -->
 <div id="timetableModal" class="modal-overlay hidden">
-  <div class="modal">
-    <h2 id="ttTitle">Weekly timetable</h2>
+  <div class="modal modal-tall">
+    <div class="sheet-head">
+      <div class="sheet-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+      </div>
+      <h2 id="ttTitle">Weekly timetable</h2>
+    </div>
     <p class="modal-hint" id="ttHint"></p>
     <div class="week-form" id="weekForm"></div>
-    <div class="modal-actions">
+    <div class="modal-actions modal-footer">
       <button class="btn btn-ghost" id="ttCancelBtn" data-close-modal="timetableModal">Cancel</button>
       <button class="btn btn-primary" id="ttSaveBtn">Save timetable</button>
     </div>
