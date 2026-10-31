@@ -34,9 +34,14 @@
     </svg>
     <h1 class="app-title">Bunk Meter</h1>
   </div>
+  <div class="topbar-actions">
+  <button id="timetableBtn" class="icon-btn" aria-label="Weekly timetable" title="Weekly timetable">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+  </button>
   <button id="settingsBtn" class="icon-btn" aria-label="Settings" title="Settings">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
   </button>
+  </div>
 </header>
 
 <main>
@@ -70,6 +75,24 @@
     </div>
   </section>
 
+  <!-- Offer to set up the weekly timetable (shown until one exists) -->
+  <div id="timetablePrompt" class="tt-prompt hidden">
+    <div class="tt-prompt-text">
+      <strong>Set up your weekly timetable</strong>
+      <span>Pick which subjects you have each day and the app will show only today's classes.</span>
+    </div>
+    <div class="tt-prompt-actions">
+      <button class="btn btn-primary" id="setupTimetableBtn">Set up</button>
+      <button class="btn btn-ghost" id="dismissPromptBtn">Not now</button>
+    </div>
+  </div>
+
+  <!-- Switch between today's timetable and every subject -->
+  <div id="viewSwitch" class="view-switch hidden">
+    <button type="button" data-view="today">Today</button>
+    <button type="button" data-view="all">All</button>
+  </div>
+
   <!-- Subject cards get inserted here by app.js -->
   <section id="subjectList" class="subject-list"></section>
 
@@ -77,6 +100,20 @@
     <span class="fab-plus">+</span> Add Subject
   </button>
 </main>
+
+<!-- ============ Weekly timetable editor ============ -->
+<div id="timetableModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2>Weekly timetable</h2>
+    <p class="modal-hint">Choose a day, then tap the subjects you have that day, in the order of your classes. The app will show only those subjects on that day.</p>
+    <div class="day-tabs" id="dayTabs"></div>
+    <span class="field-label" id="dayLabel"></span>
+    <div class="preset-chips tt-chips" id="ttChips"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" data-close-modal="timetableModal">Done</button>
+    </div>
+  </div>
+</div>
 
 <!-- ============ Subject options sheet (opened by the ⋯ button on a card) ============ -->
 <div id="subjectMenuModal" class="modal-overlay hidden">

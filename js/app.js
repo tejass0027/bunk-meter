@@ -27,10 +27,30 @@ function todayStr() {
   return `${y}-${m}-${day}`;
 }
 
+// Weekly timetable: for each weekday, the list of subject ids that have class
+// that day, in class order. e.g. { mon: ["s_1", "s_2"], tue: [], ... }
+const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]; // matches Date.getDay()
+const TIMETABLE_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+const DAY_NAMES = {
+  mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday",
+  fri: "Friday", sat: "Saturday", sun: "Sunday",
+};
+
+function normalizeTimetable(raw, subjects) {
+  const valid = new Set(subjects.map((s) => s.id));
+  const result = {};
+  for (const key of DAY_KEYS) {
+    const list = raw && Array.isArray(raw[key]) ? raw[key] : [];
+    result[key] = [...new Set(list)].filter((id) => valid.has(id));
+  }
+  return result;
+}
+
 function defaultData() {
   return {
     target: 75, // percent, e.g. 75 means 75%
     subjects: [],
+    timetable: normalizeTimetable(null, []),
   };
 }
 
@@ -44,6 +64,7 @@ function loadData() {
     if (typeof parsed.target !== "number" || parsed.target <= 0 || parsed.target > 100) {
       parsed.target = 75;
     }
+    parsed.timetable = normalizeTimetable(parsed.timetable, parsed.subjects);
     return parsed;
   } catch (e) {
     console.error("Could not read saved data, starting fresh.", e);
@@ -205,10 +226,14 @@ function renderOverall() {
     weekday: "long", day: "numeric", month: "long",
   });
   const todayProgressEl = document.getElementById("todayProgress");
-  const markedCount = state.subjects.filter((s) => s.lastMarkedDate === todayStr()).length;
+  const todayList = hasTimetable() ? todaysSubjects() : state.subjects;
+  const markedCount = todayList.filter((s) => s.lastMarkedDate === todayStr()).length;
+  const noClassesToday = hasTimetable() && todayList.length === 0;
   todayProgressEl.classList.toggle("hidden", state.subjects.length === 0);
-  todayProgressEl.textContent = `${markedCount} of ${state.subjects.length} marked today`;
-  todayProgressEl.classList.toggle("all-done", state.subjects.length > 0 && markedCount === state.subjects.length);
+  todayProgressEl.textContent = noClassesToday
+    ? "No classes today"
+    : `${markedCount} of ${todayList.length} marked today`;
+  todayProgressEl.classList.toggle("all-done", todayList.length > 0 && markedCount === todayList.length);
 
   document.getElementById("statSubjects").textContent = state.subjects.length;
   document.getElementById("statAttended").textContent = totals.attended;
@@ -217,10 +242,77 @@ function renderOverall() {
   overallCardEl.className = "hero status-" + status.color;
 }
 
+/* ---- Timetable helpers: which subjects belong to today ---- */
+let viewMode = "today"; // "today" = only today's timetable, "all" = every subject
+
+function todayKey() {
+  return DAY_KEYS[new Date().getDay()];
+}
+
+function hasTimetable() {
+  return DAY_KEYS.some((k) => state.timetable[k].length > 0);
+}
+
+function subjectsOn(dayKey) {
+  return state.timetable[dayKey]
+    .map((id) => state.subjects.find((s) => s.id === id))
+    .filter(Boolean);
+}
+
+function todaysSubjects() {
+  return subjectsOn(todayKey());
+}
+
+function visibleSubjects() {
+  if (!hasTimetable() || viewMode === "all") return state.subjects;
+  return todaysSubjects();
+}
+
+function removeFromTimetable(id) {
+  for (const key of DAY_KEYS) {
+    state.timetable[key] = state.timetable[key].filter((x) => x !== id);
+  }
+}
+
+function renderViewControls() {
+  const showSwitch = state.subjects.length > 0 && hasTimetable();
+  const switchEl = document.getElementById("viewSwitch");
+  switchEl.classList.toggle("hidden", !showSwitch);
+  if (showSwitch) {
+    const todayBtn = switchEl.querySelector('[data-view="today"]');
+    const allBtn = switchEl.querySelector('[data-view="all"]');
+    todayBtn.textContent = `Today · ${todaysSubjects().length}`;
+    allBtn.textContent = `All · ${state.subjects.length}`;
+    todayBtn.classList.toggle("active", viewMode === "today");
+    allBtn.classList.toggle("active", viewMode === "all");
+  }
+  document.getElementById("timetablePrompt").classList.toggle(
+    "hidden",
+    !(state.subjects.length > 0 && !hasTimetable() && !state.hidePrompt)
+  );
+}
+
 let renderedIds = new Set(); // cards already on screen, so only new ones animate in
 
 function renderSubjects() {
   subjectListEl.innerHTML = "";
+  renderViewControls();
+
+  const list = visibleSubjects();
+
+  if (state.subjects.length > 0 && list.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.innerHTML = `
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </div>
+      <div class="empty-title">No classes today</div>
+      <div class="empty-text">Nothing in your timetable for ${DAY_NAMES[todayKey()]}. Switch to "All" to mark an extra class.</div>
+    `;
+    subjectListEl.appendChild(empty);
+    return;
+  }
 
   if (state.subjects.length === 0) {
     const empty = document.createElement("div");
@@ -236,12 +328,12 @@ function renderSubjects() {
     return;
   }
 
-  for (const subject of state.subjects) {
+  for (const subject of list) {
     const card = buildSubjectCard(subject);
     if (!renderedIds.has(subject.id)) card.classList.add("card-enter");
     subjectListEl.appendChild(card);
   }
-  renderedIds = new Set(state.subjects.map((s) => s.id));
+  renderedIds = new Set(list.map((s) => s.id));
 }
 
 function buildSubjectCard(subject) {
@@ -281,7 +373,14 @@ function buildSubjectCard(subject) {
   `;
 
   card.classList.add("status-" + status.color);
-  card.querySelector(".subject-name").textContent = subject.name;
+  const nameEl = card.querySelector(".subject-name");
+  nameEl.textContent = subject.name;
+  if (hasTimetable() && viewMode === "all" && state.timetable[todayKey()].includes(subject.id)) {
+    const chip = document.createElement("span");
+    chip.className = "today-chip";
+    chip.textContent = "Today";
+    nameEl.append(" ", chip);
+  }
   const missed = subject.total - subject.attended;
   card.querySelector(".subject-count").textContent =
     `${subject.attended} attended · ${missed} missed`;
@@ -513,6 +612,8 @@ saveSubjectBtn.addEventListener("click", () => {
   }
 
   closeModal("subjectModal");
+  // New subjects aren't in the timetable yet, so show everything so they're visible.
+  if (hasTimetable()) viewMode = "all";
   render();
   showToast(added === 1 ? "Added 1 subject" : `Added ${added} subjects`);
 });
@@ -628,12 +729,103 @@ function runSubjectAction(action, subject) {
       `This will permanently delete "${subject.name}" and its attendance history.`,
       () => {
         state.subjects = state.subjects.filter((s) => s.id !== id);
+        removeFromTimetable(id);
         render();
         showToast("Subject deleted");
       }
     );
   }
 }
+
+// ---- Weekly timetable editor ----
+const dayTabsEl = document.getElementById("dayTabs");
+const ttChipsEl = document.getElementById("ttChips");
+let ttDay = "mon"; // day currently being edited
+
+function renderTimetableEditor() {
+  dayTabsEl.innerHTML = "";
+  for (const key of TIMETABLE_ORDER) {
+    const tab = document.createElement("button");
+    tab.type = "button";
+    tab.className = "day-tab";
+    tab.dataset.day = key;
+    const count = state.timetable[key].length;
+    tab.classList.toggle("selected", key === ttDay);
+    tab.classList.toggle("is-today", key === todayKey());
+    const name = document.createElement("span");
+    name.textContent = DAY_NAMES[key].slice(0, 3);
+    const badge = document.createElement("small");
+    badge.textContent = count > 0 ? String(count) : "–";
+    tab.append(name, badge);
+    dayTabsEl.appendChild(tab);
+  }
+
+  document.getElementById("dayLabel").textContent = `Subjects on ${DAY_NAMES[ttDay]} — tap in class order`;
+  ttChipsEl.innerHTML = "";
+
+  if (state.subjects.length === 0) {
+    const note = document.createElement("p");
+    note.className = "modal-hint";
+    note.textContent = "Add your subjects first, then come back to build your timetable.";
+    ttChipsEl.appendChild(note);
+    return;
+  }
+
+  const dayList = state.timetable[ttDay];
+  for (const subject of state.subjects) {
+    const idx = dayList.indexOf(subject.id);
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "preset-chip" + (idx >= 0 ? " preset-chip-selected" : "");
+    chip.dataset.id = subject.id;
+    if (idx >= 0) {
+      const order = document.createElement("span");
+      order.className = "chip-order";
+      order.textContent = String(idx + 1);
+      chip.append(order);
+    }
+    chip.append(subject.name);
+    ttChipsEl.appendChild(chip);
+  }
+}
+
+dayTabsEl.addEventListener("click", (e) => {
+  const tab = e.target.closest(".day-tab");
+  if (!tab) return;
+  ttDay = tab.dataset.day;
+  renderTimetableEditor();
+});
+
+ttChipsEl.addEventListener("click", (e) => {
+  const chip = e.target.closest(".preset-chip");
+  if (!chip) return;
+  const list = state.timetable[ttDay];
+  const idx = list.indexOf(chip.dataset.id);
+  if (idx >= 0) list.splice(idx, 1);
+  else list.push(chip.dataset.id);
+  render();
+  renderTimetableEditor();
+});
+
+function openTimetable() {
+  ttDay = todayKey();
+  renderTimetableEditor();
+  openModal("timetableModal");
+}
+
+document.getElementById("timetableBtn").addEventListener("click", openTimetable);
+document.getElementById("setupTimetableBtn").addEventListener("click", openTimetable);
+document.getElementById("dismissPromptBtn").addEventListener("click", () => {
+  state.hidePrompt = true;
+  render();
+});
+
+document.getElementById("viewSwitch").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-view]");
+  if (!btn) return;
+  viewMode = btn.dataset.view;
+  render();
+});
 
 // ---- Settings modal ----
 const targetInput = document.getElementById("targetInput");
@@ -733,15 +925,17 @@ importFileInput.addEventListener("change", () => {
       "Import data?",
       "This will replace all current subjects and settings with the contents of the backup file.",
       () => {
+        const importedSubjects = parsed.subjects.map((s) => ({
+          id: s.id || makeId(),
+          name: String(s.name || "Untitled"),
+          attended: Math.max(0, Math.floor(Number(s.attended) || 0)),
+          total: Math.max(0, Math.floor(Number(s.total) || 0)),
+          lastAction: null,
+        }));
         state = {
           target: Math.min(100, Math.max(1, Math.round(parsed.target))),
-          subjects: parsed.subjects.map((s) => ({
-            id: s.id || makeId(),
-            name: String(s.name || "Untitled"),
-            attended: Math.max(0, Math.floor(Number(s.attended) || 0)),
-            total: Math.max(0, Math.floor(Number(s.total) || 0)),
-            lastAction: null,
-          })),
+          subjects: importedSubjects,
+          timetable: normalizeTimetable(parsed.timetable, importedSubjects),
         };
         render();
         closeModal("settingsModal");

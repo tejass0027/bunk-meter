@@ -137,6 +137,8 @@ button, input { font-family: inherit; }
 .icon-btn svg { width: 22px; height: 22px; }
 .icon-btn:active { background: var(--surface-2); transform: scale(0.92); }
 
+.topbar-actions { display: flex; align-items: center; gap: 2px; }
+
 /* ---------- Layout ---------- */
 main { padding: 4px 16px 16px; max-width: 560px; margin: 0 auto; }
 
@@ -380,6 +382,90 @@ main { padding: 4px 16px 16px; max-width: 560px; margin: 0 auto; }
 .undo-btn svg { width: 16px; height: 16px; }
 .undo-btn:not(:disabled):active { transform: scale(0.95); }
 .undo-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ---------- Timetable ---------- */
+.view-switch {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 14px;
+  border-radius: 18px;
+  background: var(--surface-2);
+}
+.view-switch button {
+  flex: 1;
+  border: none;
+  padding: 11px 0;
+  border-radius: 14px;
+  background: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.view-switch button.active { background: var(--brand); color: #fff; box-shadow: 0 3px 0 var(--brand-dark); }
+
+.tt-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 22px;
+  background: var(--surface-2);
+  border: 2px dashed var(--brand);
+}
+.tt-prompt-text { display: flex; flex-direction: column; gap: 4px; }
+.tt-prompt-text strong { font-size: 15.5px; font-weight: 800; }
+.tt-prompt-text span { font-size: 13.5px; font-weight: 600; color: var(--text-muted); line-height: 1.45; }
+.tt-prompt-actions { display: flex; gap: 8px; }
+
+.today-chip {
+  display: inline-block;
+  vertical-align: middle;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+}
+
+.day-tabs { display: flex; gap: 6px; margin: 14px 0 4px; }
+.day-tab {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 9px 0;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.day-tab small { font-size: 11px; font-weight: 800; opacity: 0.65; }
+.day-tab.is-today { border-color: var(--brand); }
+.day-tab.selected { background: var(--brand); border-color: var(--brand); color: #fff; }
+.day-tab.selected small { opacity: 0.9; }
+
+.tt-chips { max-height: 260px; }
+.chip-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  font-size: 12px;
+}
 
 /* ---------- Floating add button ---------- */
 .fab {
