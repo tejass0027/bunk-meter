@@ -739,144 +739,95 @@ function runSubjectAction(action, subject) {
   }
 }
 
-// ---- Weekly timetable editor ----
-const dayTabsEl = document.getElementById("dayTabs");
-const ttChipsEl = document.getElementById("ttChips");
-const ttDayListEl = document.getElementById("ttDayList");
-const ttExistingEl = document.getElementById("ttExisting");
-let ttDay = "mon"; // day currently being edited
+// ---- Weekly timetable: one form for the whole week ----
+const weekFormEl = document.getElementById("weekForm");
+const weekInputs = {}; // day key -> textarea
 
-function renderTimetableEditor() {
-  dayTabsEl.innerHTML = "";
+function buildWeekForm() {
+  weekFormEl.innerHTML = "";
   for (const key of TIMETABLE_ORDER) {
-    const tab = document.createElement("button");
-    tab.type = "button";
-    tab.className = "day-tab";
-    tab.dataset.day = key;
-    const count = state.timetable[key].length;
-    tab.classList.toggle("selected", key === ttDay);
-    tab.classList.toggle("is-today", key === todayKey());
-    const name = document.createElement("span");
-    name.textContent = DAY_NAMES[key].slice(0, 3);
-    const badge = document.createElement("small");
-    badge.textContent = count > 0 ? String(count) : "–";
-    tab.append(name, badge);
-    dayTabsEl.appendChild(tab);
-  }
+    const row = document.createElement("label");
+    row.className = "week-row";
 
-  document.getElementById("dayLabel").textContent = `${DAY_NAMES[ttDay]}'s subjects`;
-  document.getElementById("ttInput").placeholder = `Type a subject for ${DAY_NAMES[ttDay]}`;
+    const head = document.createElement("span");
+    head.className = "week-label";
+    head.textContent = DAY_NAMES[key];
+    if (key === todayKey()) {
+      const chip = document.createElement("span");
+      chip.className = "today-chip";
+      chip.textContent = "Today";
+      head.append(" ", chip);
+    }
 
-  // This day's subjects, in order, each with a remove button
-  ttDayListEl.innerHTML = "";
-  const todays = subjectsOn(ttDay);
-  if (todays.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "day-empty";
-    empty.textContent = `No subjects added for ${DAY_NAMES[ttDay]} yet.`;
-    ttDayListEl.appendChild(empty);
-  }
-  todays.forEach((subject, i) => {
-    const row = document.createElement("div");
-    row.className = "day-row";
-    const num = document.createElement("span");
-    num.className = "day-row-num";
-    num.textContent = String(i + 1);
-    const name = document.createElement("span");
-    name.className = "day-row-name";
-    name.textContent = subject.name;
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.className = "day-row-remove";
-    remove.dataset.remove = subject.id;
-    remove.setAttribute("aria-label", `Remove ${subject.name} from ${DAY_NAMES[ttDay]}`);
-    remove.innerHTML = ICON_MISS;
-    row.append(num, name, remove);
-    ttDayListEl.appendChild(row);
-  });
+    const box = document.createElement("textarea");
+    box.rows = 2;
+    box.maxLength = 400;
+    box.placeholder = "e.g. Maths, Physics, Chemistry";
+    box.value = subjectsOn(key).map((s) => s.name).join(", ");
+    weekInputs[key] = box;
 
-  // Quick-pick: subjects you've already added that aren't on this day yet
-  ttChipsEl.innerHTML = "";
-  const onThisDay = new Set(state.timetable[ttDay]);
-  const available = state.subjects.filter((s) => !onThisDay.has(s.id));
-  ttExistingEl.classList.toggle("hidden", available.length === 0);
-  for (const subject of available) {
-    const chip = document.createElement("button");
-    chip.type = "button";
-    chip.className = "preset-chip";
-    chip.dataset.id = subject.id;
-    chip.textContent = subject.name;
-    ttChipsEl.appendChild(chip);
+    row.append(head, box);
+    weekFormEl.appendChild(row);
   }
 }
 
-// Add a subject to the day being edited. Reuses an existing subject with the
-// same name, otherwise creates a new one, so you can just type what you have.
-function addToDay(rawName) {
-  const name = rawName.trim();
-  if (!name) return;
-  let subject = state.subjects.find((s) => s.name.toLowerCase() === name.toLowerCase());
-  if (!subject) {
-    subject = { id: makeId(), name, attended: 0, total: 0, lastAction: null };
-    state.subjects.push(subject);
+// "Maths, Physics\nChem" -> ["Maths", "Physics", "Chem"] (no empty or repeated names)
+function parseNames(text) {
+  const seen = new Set();
+  const names = [];
+  for (const part of text.split(/[,;\n]+/)) {
+    const name = part.trim().slice(0, 60);
+    if (!name || seen.has(name.toLowerCase())) continue;
+    seen.add(name.toLowerCase());
+    names.push(name);
   }
-  if (state.timetable[ttDay].includes(subject.id)) {
-    showToast(`${subject.name} is already on ${DAY_NAMES[ttDay]}`);
-    return;
-  }
-  state.timetable[ttDay].push(subject.id);
-  render();
-  renderTimetableEditor();
+  return names;
 }
 
-dayTabsEl.addEventListener("click", (e) => {
-  const tab = e.target.closest(".day-tab");
-  if (!tab) return;
-  ttDay = tab.dataset.day;
-  renderTimetableEditor();
-});
+// Turn what was typed into subjects + a timetable. A name that already exists
+// is reused, so "Maths" typed on three days is still one subject.
+function saveWeekForm() {
+  const byName = new Map(state.subjects.map((s) => [s.name.toLowerCase(), s]));
+  const timetable = {};
+  let created = 0;
 
-ttChipsEl.addEventListener("click", (e) => {
-  const chip = e.target.closest(".preset-chip");
-  if (!chip) return;
-  state.timetable[ttDay].push(chip.dataset.id);
-  render();
-  renderTimetableEditor();
-});
-
-ttDayListEl.addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-remove]");
-  if (!btn) return;
-  state.timetable[ttDay] = state.timetable[ttDay].filter((id) => id !== btn.dataset.remove);
-  render();
-  renderTimetableEditor();
-});
-
-const ttInputEl = document.getElementById("ttInput");
-function submitTimetableInput() {
-  addToDay(ttInputEl.value);
-  ttInputEl.value = "";
-  ttInputEl.focus();
-}
-document.getElementById("ttAddBtn").addEventListener("click", submitTimetableInput);
-ttInputEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    submitTimetableInput();
+  for (const key of DAY_KEYS) {
+    const ids = [];
+    for (const name of parseNames(weekInputs[key].value)) {
+      let subject = byName.get(name.toLowerCase());
+      if (!subject) {
+        subject = { id: makeId(), name, attended: 0, total: 0, lastAction: null };
+        state.subjects.push(subject);
+        byName.set(name.toLowerCase(), subject);
+        created++;
+      }
+      ids.push(subject.id);
+    }
+    timetable[key] = ids;
   }
-});
 
-function openTimetable() {
-  ttDay = todayKey();
-  viewMode = "today"; // after editing, show the day's own subjects
-  ttInputEl.value = "";
-  renderTimetableEditor();
+  state.timetable = timetable;
+  viewMode = "today";
+  closeModal("timetableModal");
+  render();
+  showToast(created > 0 ? `Timetable saved — ${created} new subject${created === 1 ? "" : "s"} added` : "Timetable saved");
+}
+
+function openTimetable(firstRun) {
+  document.getElementById("ttTitle").textContent = firstRun ? "Welcome! Set up your week" : "Weekly timetable";
+  document.getElementById("ttHint").textContent = firstRun
+    ? "Type the subjects you have on each day, separated by commas. Leave a day empty if you have no classes. You can change this any time."
+    : "Type the subjects for each day, separated by commas. Leave a day empty if you have no classes.";
+  document.getElementById("ttSaveBtn").textContent = firstRun ? "Save & start" : "Save timetable";
+  document.getElementById("ttCancelBtn").textContent = firstRun ? "Skip for now" : "Cancel";
+  buildWeekForm();
   openModal("timetableModal");
-  render();
+  weekFormEl.parentElement.scrollTop = 0;
 }
 
-document.getElementById("timetableBtn").addEventListener("click", openTimetable);
-document.getElementById("timetableCta").addEventListener("click", openTimetable);
+document.getElementById("timetableBtn").addEventListener("click", () => openTimetable(false));
+document.getElementById("timetableCta").addEventListener("click", () => openTimetable(false));
+document.getElementById("ttSaveBtn").addEventListener("click", saveWeekForm);
 
 document.getElementById("viewSwitch").addEventListener("click", (e) => {
   const btn = e.target.closest("[data-view]");
@@ -1021,9 +972,12 @@ if ("serviceWorker" in navigator) {
     });
   });
 
+  // Only reload for an UPDATE. On a very first visit there is no older version
+  // to replace, and reloading would close the welcome setup screen.
+  const hadController = !!navigator.serviceWorker.controller;
   let reloadedForUpdate = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (reloadedForUpdate) return;
+    if (!hadController || reloadedForUpdate) return;
     reloadedForUpdate = true;
     window.location.reload();
   });
@@ -1033,3 +987,11 @@ if ("serviceWorker" in navigator) {
    Initial render on page load
    --------------------------------------------------------------------- */
 render();
+
+// First time someone opens the app: ask for the whole week up front.
+// setupDone makes sure this only ever pops up once.
+if (state.subjects.length === 0 && !hasTimetable() && !state.setupDone) {
+  state.setupDone = true;
+  saveData();
+  openTimetable(true);
+}

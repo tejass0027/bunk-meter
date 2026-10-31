@@ -452,91 +452,24 @@ main { padding: 4px 16px 16px; max-width: 560px; margin: 0 auto; }
   color: #fff;
 }
 
-.day-tabs { display: flex; gap: 6px; margin: 14px 0 4px; }
-.day-tab {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 9px 0;
-  border: 2px solid transparent;
-  border-radius: 14px;
-  background: var(--surface-2);
-  color: var(--text);
-  font-size: 12.5px;
-  font-weight: 800;
-  cursor: pointer;
-}
-.day-tab small { font-size: 11px; font-weight: 800; opacity: 0.65; }
-.day-tab.is-today { border-color: var(--brand); }
-.day-tab.selected { background: var(--brand); border-color: var(--brand); color: #fff; }
-.day-tab.selected small { opacity: 0.9; }
-
-.tt-chips { max-height: 120px; }
-
-.day-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-.day-empty {
-  padding: 14px;
-  border-radius: 14px;
-  border: 2px dashed var(--border);
-  color: var(--text-muted);
-  font-size: 13.5px;
+.week-form { display: flex; flex-direction: column; gap: 12px; margin: 14px 0 4px; }
+.week-row { display: block; }
+.week-label { display: block; font-size: 13.5px; font-weight: 800; margin-bottom: 6px; }
+.week-row textarea {
+  width: 100%;
+  min-height: 62px;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 15.5px;
   font-weight: 700;
-  text-align: center;
-}
-.day-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 9px 8px 9px 10px;
-  border-radius: 14px;
-  background: var(--surface-2);
-}
-.day-row-num {
-  width: 26px;
-  height: 26px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--brand);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 800;
-}
-.day-row-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 800; word-break: break-word; }
-.day-row-remove {
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  border: none;
-  border-radius: 10px;
-  background: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.day-row-remove svg { width: 18px; height: 18px; }
-.day-row-remove:active { background: var(--red-bg); color: var(--red-text); }
-
-.tt-add { display: flex; gap: 8px; margin-bottom: 14px; }
-.tt-add input {
-  flex: 1;
-  min-width: 0;
-  padding: 14px;
-  font-size: 16px;
-  font-weight: 700;
+  line-height: 1.4;
   border: 2px solid var(--border);
   border-radius: 16px;
   background: var(--surface-2);
   color: var(--text);
+  resize: vertical;
 }
-.tt-add input:focus { outline: none; border-color: var(--brand); }
+.week-row textarea:focus { outline: none; border-color: var(--brand); }
 
 /* ---------- Floating add button ---------- */
 .fab {

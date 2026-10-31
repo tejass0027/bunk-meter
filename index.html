@@ -104,21 +104,12 @@
 <!-- ============ Weekly timetable editor ============ -->
 <div id="timetableModal" class="modal-overlay hidden">
   <div class="modal">
-    <h2>Weekly timetable</h2>
-    <p class="modal-hint">Choose a day and type the subjects you have that day. Each day the app shows only that day's subjects.</p>
-    <div class="day-tabs" id="dayTabs"></div>
-    <span class="field-label" id="dayLabel"></span>
-    <div class="day-list" id="ttDayList"></div>
-    <div class="tt-add">
-      <input type="text" id="ttInput" maxlength="60" autocomplete="off" />
-      <button type="button" class="btn btn-primary" id="ttAddBtn">Add</button>
-    </div>
-    <div id="ttExisting">
-      <span class="field-label">Or pick one you already added</span>
-      <div class="preset-chips tt-chips" id="ttChips"></div>
-    </div>
+    <h2 id="ttTitle">Weekly timetable</h2>
+    <p class="modal-hint" id="ttHint"></p>
+    <div class="week-form" id="weekForm"></div>
     <div class="modal-actions">
-      <button class="btn btn-primary" data-close-modal="timetableModal">Done</button>
+      <button class="btn btn-ghost" id="ttCancelBtn" data-close-modal="timetableModal">Cancel</button>
+      <button class="btn btn-primary" id="ttSaveBtn">Save timetable</button>
     </div>
   </div>
 </div>
